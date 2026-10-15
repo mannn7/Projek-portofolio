@@ -140,4 +140,38 @@
     body {
         @apply bg-background text-foreground;
     }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        html {
+            scroll-behavior: auto;
+        }
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+@layer components {
+    .admin-input {
+        @apply w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white transition outline-none placeholder:text-slate-600 focus:border-violet-400/70 focus:ring-2 focus:ring-violet-500/15;
+    }
+    .admin-ghost {
+        @apply inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white;
+    }
+}
+
+.portfolio-grid {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 52px 52px;
+    mask-image: linear-gradient(to bottom, black, transparent 88%);
 }

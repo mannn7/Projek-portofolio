@@ -10,6 +10,7 @@ class Project extends Model
         'title',
         'slug',
         'description',
+        'category',
         'content',
         'image',
         'technologies',

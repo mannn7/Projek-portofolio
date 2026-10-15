@@ -3,9 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Certificate;
+use App\Models\Experience;
 use App\Models\Profile;
 use App\Models\Project;
 use App\Models\Skill;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,18 +27,151 @@ class PortfolioDashboardController extends Controller
                 'drafts' => Project::where('is_published', false)->count(),
                 'skills' => Skill::count(),
                 'profiles' => Profile::count(),
+                'experiences' => Experience::count(),
+                'certificates' => Certificate::count(),
             ],
-
-            'recentProjects' => Project::query()
-                ->latest()
-                ->limit(5)
-                ->get([
-                    'id',
-                    'title',
-                    'slug',
-                    'is_published',
-                    'created_at',
-                ]),
+            'profile' => Profile::query()->first(),
+            'projects' => Project::query()->orderBy('sort_order')->latest()->get(),
+            'skills' => Skill::query()->orderBy('sort_order')->get(),
+            'experiences' => Experience::query()->orderByDesc('started_at')->get(),
+            'certificates' => Certificate::query()->orderBy('sort_order')->get(),
         ]);
+    }
+
+    public function store(Request $request, string $resource): RedirectResponse
+    {
+        $model = $this->modelFor($resource);
+        $data = $this->validated($request, $resource);
+
+        if ($resource === 'profile') {
+            $data['user_id'] = $request->user()->id;
+            $record = Profile::query()->firstOrNew(['user_id' => $request->user()->id]);
+        } else {
+            $record = new $model;
+        }
+
+        $this->storeUploads($request, $resource, $data, $record);
+        $record->fill($data)->save();
+
+        return back()->with('success', ucfirst($resource).' saved successfully.');
+    }
+
+    public function update(Request $request, string $resource, int $id): RedirectResponse
+    {
+        $record = $this->modelFor($resource)::query()->findOrFail($id);
+        $data = $this->validated($request, $resource, $id);
+        $this->storeUploads($request, $resource, $data, $record);
+        $record->update($data);
+
+        return back()->with('success', ucfirst($resource).' updated successfully.');
+    }
+
+    public function destroy(string $resource, int $id): RedirectResponse
+    {
+        abort_if($resource === 'profile', 405);
+        $record = $this->modelFor($resource)::query()->findOrFail($id);
+
+        foreach (['image', 'photo', 'cv_file'] as $field) {
+            if ($record->getAttribute($field)) {
+                Storage::disk('public')->delete($record->getAttribute($field));
+            }
+        }
+
+        $record->delete();
+
+        return back()->with('success', 'Item deleted successfully.');
+    }
+
+    /** @return class-string<Model> */
+    private function modelFor(string $resource): string
+    {
+        return match ($resource) {
+            'profile' => Profile::class,
+            'projects' => Project::class,
+            'skills' => Skill::class,
+            'experiences' => Experience::class,
+            'certificates' => Certificate::class,
+            default => abort(404),
+        };
+    }
+
+    /** @return array<string, mixed> */
+    private function validated(Request $request, string $resource, ?int $id = null): array
+    {
+        $rules = match ($resource) {
+            'profile' => [
+                'name' => ['required', 'string', 'max:100'],
+                'headline' => ['nullable', 'string', 'max:160'],
+                'bio' => ['nullable', 'string', 'max:3000'],
+                'email' => ['nullable', 'email', 'max:255'],
+                'github_url' => ['nullable', 'url', 'max:255'],
+                'linkedin_url' => ['nullable', 'url', 'max:255'],
+                'location' => ['nullable', 'string', 'max:160'],
+                'available_for_work' => ['boolean'],
+                'photo' => ['nullable', 'image', 'max:4096'],
+                'cv_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            ],
+            'projects' => [
+                'title' => ['required', 'string', 'max:160'],
+                'slug' => ['required', 'alpha_dash', 'max:180', Rule::unique('projects', 'slug')->ignore($id)],
+                'description' => ['nullable', 'string', 'max:1000'],
+                'content' => ['nullable', 'string', 'max:20000'],
+                'category' => ['nullable', 'string', 'max:80'],
+                'technologies' => ['nullable', 'string', 'max:1000'],
+                'github_url' => ['nullable', 'url', 'max:255'],
+                'demo_url' => ['nullable', 'url', 'max:255'],
+                'image' => ['nullable', 'image', 'max:6144'],
+                'is_featured' => ['boolean'], 'is_published' => ['boolean'],
+                'sort_order' => ['integer', 'min:0', 'max:9999'],
+            ],
+            'skills' => [
+                'name' => ['required', 'string', 'max:100'],
+                'category' => ['required', 'string', 'max:80'],
+                'icon' => ['nullable', 'string', 'max:100'],
+                'sort_order' => ['integer', 'min:0', 'max:9999'], 'is_active' => ['boolean'],
+            ],
+            'experiences' => [
+                'role' => ['required', 'string', 'max:160'], 'company' => ['required', 'string', 'max:160'],
+                'location' => ['nullable', 'string', 'max:160'], 'started_at' => ['required', 'date'],
+                'ended_at' => ['nullable', 'date', 'after_or_equal:started_at'],
+                'description' => ['nullable', 'string', 'max:3000'],
+                'sort_order' => ['integer', 'min:0', 'max:9999'], 'is_active' => ['boolean'],
+            ],
+            'certificates' => [
+                'name' => ['required', 'string', 'max:160'], 'issuer' => ['required', 'string', 'max:160'],
+                'issued_at' => ['nullable', 'date'], 'credential_url' => ['nullable', 'url', 'max:255'],
+                'image' => ['nullable', 'image', 'max:4096'],
+                'sort_order' => ['integer', 'min:0', 'max:9999'], 'is_active' => ['boolean'],
+            ],
+            default => abort(404),
+        };
+
+        $data = $request->validate($rules);
+        foreach (['available_for_work', 'is_featured', 'is_published', 'is_active'] as $field) {
+            if (array_key_exists($field, $rules)) {
+                $data[$field] = $request->boolean($field);
+            }
+        }
+        if ($resource === 'projects' && isset($data['technologies'])) {
+            $data['technologies'] = array_values(array_filter(array_map('trim', explode(',', $data['technologies']))));
+        }
+
+        return $data;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function storeUploads(Request $request, string $resource, array &$data, Model $record): void
+    {
+        foreach (['photo', 'cv_file', 'image'] as $field) {
+            if (! $request->hasFile($field)) {
+                unset($data[$field]);
+
+                continue;
+            }
+            if ($record->getAttribute($field)) {
+                Storage::disk('public')->delete($record->getAttribute($field));
+            }
+            $data[$field] = $request->file($field)->store($resource, 'public');
+        }
     }
 }

@@ -1,11 +1,12 @@
 
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Controllers\Admin\PortfolioDashboardController;
-use App\Http\Middleware\EnsureTeamMembership;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PortfolioController;
+use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsurePortfolioAdmin;
+use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,7 +16,8 @@ use Illuminate\Support\Facades\Route;
 | Halaman utama portofolio yang dapat diakses semua pengunjung.
 */
 
-Route::inertia('/', 'portfolio')->name('home');
+Route::get('/', [PortfolioController::class, 'index'])->name('home');
+Route::get('/projects/{project:slug}', [PortfolioController::class, 'project'])->name('projects.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +40,15 @@ Route::prefix('admin')
             PortfolioDashboardController::class,
             'index',
         ])->name('index');
+        Route::post('/content/{resource}', [PortfolioDashboardController::class, 'store'])
+            ->whereIn('resource', ['profile', 'projects', 'skills', 'experiences', 'certificates'])
+            ->name('content.store');
+        Route::post('/content/{resource}/{id}', [PortfolioDashboardController::class, 'update'])
+            ->whereIn('resource', ['profile', 'projects', 'skills', 'experiences', 'certificates'])
+            ->name('content.update');
+        Route::delete('/content/{resource}/{id}', [PortfolioDashboardController::class, 'destroy'])
+            ->whereIn('resource', ['projects', 'skills', 'experiences', 'certificates'])
+            ->name('content.destroy');
     });
 
 /*
@@ -88,4 +99,4 @@ Route::middleware(['auth'])->group(function () {
 | Mempertahankan route pengaturan akun Laravel.
 */
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

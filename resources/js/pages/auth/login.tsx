@@ -34,7 +34,6 @@ export default function Login({
                 />
             )}
 
-
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
@@ -102,7 +101,6 @@ export default function Login({
                                 Log in
                             </Button>
                         </div>
-
                     </>
                 )}
             </Form>
