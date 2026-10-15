@@ -71,6 +71,7 @@ const defaults: Profile = {
     name: 'Firman Aji',
     headline: 'Full-Stack Developer',
     bio: 'I build dependable web products with Laravel, React, TypeScript, and thoughtful interface design.',
+    photo: '/images/firman-aji-profile-blue.png',
     location: 'Indonesia',
     available_for_work: true,
 };
@@ -90,7 +91,8 @@ const nav = [
     ['Certificates', '#certificates'],
     ['Contact', '#contact'],
 ];
-const asset = (path?: string) => (path ? `/storage/${path}` : undefined);
+const asset = (path?: string) =>
+    path ? (path.startsWith('/') ? path : `/storage/${path}`) : undefined;
 const formatDate = (value?: string) =>
     value
         ? new Intl.DateTimeFormat('en', {
@@ -153,7 +155,11 @@ export default function Portfolio({
     experiences,
     certificates,
 }: Props) {
-    const profile = { ...defaults, ...storedProfile };
+    const profile = {
+        ...defaults,
+        ...storedProfile,
+        photo: storedProfile?.photo || defaults.photo,
+    };
     const [menu, setMenu] = useState(false);
     const categories = useMemo(
         () => [
