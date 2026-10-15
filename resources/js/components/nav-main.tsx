@@ -14,13 +14,16 @@ export function NavMain({ items }: { items: NavItem[] }) {
 
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-[10px] tracking-[0.2em] text-slate-500 uppercase">
+                Workspace
+            </SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                             asChild
                             isActive={isCurrentUrl(item.href)}
+                            className="h-10 rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white data-[active=true]:bg-violet-500/15 data-[active=true]:text-violet-300"
                             tooltip={{ children: item.title }}
                         >
                             <Link href={item.href} prefetch>

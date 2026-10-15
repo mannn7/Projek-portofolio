@@ -8,10 +8,14 @@ export function AppSidebarHeader({
     breadcrumbs?: BreadcrumbItemType[];
 }) {
     return (
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
-            <div className="flex items-center gap-2">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-white/5 bg-[#080d18]/90 px-5 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-7">
+            <div className="flex items-center gap-3">
                 <SidebarTrigger className="-ml-1" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
+            </div>
+            <div className="hidden items-center gap-2 text-[11px] font-medium tracking-[0.15em] text-emerald-400 uppercase sm:flex">
+                <span className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
+                Secure session
             </div>
         </header>
     );
