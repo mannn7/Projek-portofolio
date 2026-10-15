@@ -51,6 +51,8 @@ Route::prefix('admin')
             ->name('content.destroy');
         Route::patch('/projects/{project}/toggle', [PortfolioDashboardController::class, 'toggleProject'])
             ->name('projects.toggle');
+        Route::delete('/project-images/{projectImage}', [PortfolioDashboardController::class, 'destroyProjectImage'])
+            ->name('project-images.destroy');
     });
 
 /*

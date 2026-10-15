@@ -7,6 +7,7 @@ use App\Models\Certificate;
 use App\Models\Experience;
 use App\Models\Profile;
 use App\Models\Project;
+use App\Models\ProjectImage;
 use App\Models\Skill;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -31,7 +32,7 @@ class PortfolioDashboardController extends Controller
                 'certificates' => Certificate::count(),
             ],
             'profile' => Profile::query()->first(),
-            'projects' => Project::query()->orderBy('sort_order')->latest()->get(),
+            'projects' => Project::query()->with('images')->orderBy('sort_order')->latest()->get(),
             'skills' => Skill::query()->orderBy('sort_order')->get(),
             'experiences' => Experience::query()->orderByDesc('started_at')->get(),
             'certificates' => Certificate::query()->orderBy('sort_order')->get(),
@@ -52,6 +53,7 @@ class PortfolioDashboardController extends Controller
 
         $replacedFiles = $this->prepareUploads($request, $resource, $data, $record);
         $record->fill($data)->save();
+        $this->storeProjectGallery($request, $resource, $record);
         $this->deleteReplacedFiles($replacedFiles);
 
         return back()->with('success', ucfirst($resource).' saved successfully.');
@@ -63,6 +65,7 @@ class PortfolioDashboardController extends Controller
         $data = $this->validated($request, $resource, $id);
         $replacedFiles = $this->prepareUploads($request, $resource, $data, $record);
         $record->update($data);
+        $this->storeProjectGallery($request, $resource, $record);
         $this->deleteReplacedFiles($replacedFiles);
 
         return back()->with('success', ucfirst($resource).' updated successfully.');
@@ -72,6 +75,10 @@ class PortfolioDashboardController extends Controller
     {
         abort_if($resource === 'profile', 405);
         $record = $this->modelFor($resource)::query()->findOrFail($id);
+
+        if ($record instanceof Project) {
+            Storage::disk('public')->delete($record->images()->pluck('path')->all());
+        }
 
         foreach (['image', 'photo', 'cv_file'] as $field) {
             if ($record->getAttribute($field)) {
@@ -92,6 +99,14 @@ class PortfolioDashboardController extends Controller
         ]);
 
         return back()->with('success', $project->is_published ? 'Project published.' : 'Project moved to draft.');
+    }
+
+    public function destroyProjectImage(ProjectImage $projectImage): RedirectResponse
+    {
+        Storage::disk('public')->delete($projectImage->path);
+        $projectImage->delete();
+
+        return back()->with('success', 'Project screenshot deleted.');
     }
 
     /** @return class-string<Model> */
@@ -128,11 +143,17 @@ class PortfolioDashboardController extends Controller
                 'slug' => ['required', 'alpha_dash', 'max:180', Rule::unique('projects', 'slug')->ignore($id)],
                 'description' => ['nullable', 'string', 'max:1000'],
                 'content' => ['nullable', 'string', 'max:20000'],
+                'problem' => ['nullable', 'string', 'max:5000'],
+                'solution' => ['nullable', 'string', 'max:5000'],
+                'role' => ['nullable', 'string', 'max:2000'],
+                'outcome' => ['nullable', 'string', 'max:5000'],
                 'category' => ['nullable', 'string', 'max:80'],
                 'technologies' => ['nullable', 'string', 'max:1000'],
                 'github_url' => ['nullable', 'url', 'max:255'],
                 'demo_url' => ['nullable', 'url', 'max:255'],
                 'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'dimensions:min_width=1000,min_height=500', 'max:6144'],
+                'gallery' => ['nullable', 'array', 'max:8'],
+                'gallery.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'dimensions:min_width=1000,min_height=500', 'max:6144'],
                 'is_featured' => ['boolean'], 'is_published' => ['boolean'],
                 'sort_order' => ['integer', 'min:0', 'max:9999'],
             ],
@@ -167,6 +188,7 @@ class PortfolioDashboardController extends Controller
         if ($resource === 'projects' && isset($data['technologies'])) {
             $data['technologies'] = array_values(array_filter(array_map('trim', explode(',', $data['technologies']))));
         }
+        unset($data['gallery']);
 
         return $data;
     }
@@ -196,6 +218,22 @@ class PortfolioDashboardController extends Controller
     {
         if ($paths !== []) {
             Storage::disk('public')->delete($paths);
+        }
+    }
+
+    private function storeProjectGallery(Request $request, string $resource, Model $record): void
+    {
+        if ($resource !== 'projects' || ! $record instanceof Project || ! $request->hasFile('gallery')) {
+            return;
+        }
+
+        $nextOrder = (int) $record->images()->max('sort_order') + 1;
+        foreach ($request->file('gallery', []) as $image) {
+            $record->images()->create([
+                'path' => $image->store('projects/gallery', 'public'),
+                'alt_text' => $record->title.' screenshot',
+                'sort_order' => $nextOrder++,
+            ]);
         }
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PortfolioTest extends TestCase
@@ -81,5 +82,34 @@ class PortfolioTest extends TestCase
                 'photo' => UploadedFile::fake()->image('small.jpg', 120, 120),
             ])
             ->assertSessionHasErrors('photo');
+    }
+
+    public function test_admin_can_upload_multiple_project_screenshots(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $project = Project::query()->create([
+            'title' => 'Gallery project', 'slug' => 'gallery-project', 'is_published' => false,
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.update', ['resource' => 'projects', 'id' => $project->id]), [
+                'title' => $project->title,
+                'slug' => $project->slug,
+                'sort_order' => 0,
+                'is_featured' => false,
+                'is_published' => false,
+                'gallery' => [
+                    UploadedFile::fake()->image('screen-one.jpg', 1200, 700),
+                    UploadedFile::fake()->image('screen-two.jpg', 1200, 700),
+                ],
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertCount(2, $project->fresh()->images);
+        foreach ($project->fresh()->images as $image) {
+            Storage::disk('public')->assertExists($image->path);
+        }
     }
 }

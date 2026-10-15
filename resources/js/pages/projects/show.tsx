@@ -5,7 +5,16 @@ import {
     Code2,
     ExternalLink,
     Github,
+    Images,
+    Lightbulb,
+    Target,
+    TrendingUp,
+    UserRound,
 } from 'lucide-react';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+
+type ProjectImage = { id: number; path: string; alt_text?: string };
 
 type Project = {
     id: number;
@@ -13,11 +22,16 @@ type Project = {
     slug: string;
     description?: string;
     content?: string;
+    problem?: string;
+    solution?: string;
+    role?: string;
+    outcome?: string;
     category?: string;
     image?: string;
     technologies?: string[];
     github_url?: string;
     demo_url?: string;
+    images?: ProjectImage[];
 };
 export default function ProjectShow({
     project,
@@ -26,6 +40,16 @@ export default function ProjectShow({
     project: Project;
     relatedProjects: Project[];
 }) {
+    const [selectedImage, setSelectedImage] = useState<ProjectImage | null>(
+        null,
+    );
+    const caseStudy = [
+        { label: 'The problem', value: project.problem, icon: Target },
+        { label: 'The solution', value: project.solution, icon: Lightbulb },
+        { label: 'My role', value: project.role, icon: UserRound },
+        { label: 'The outcome', value: project.outcome, icon: TrendingUp },
+    ].filter((item) => item.value);
+
     return (
         <div className="min-h-screen bg-[#070910] text-slate-200">
             <Head title={`${project.title} — FA.DEV`}>
@@ -113,6 +137,66 @@ export default function ProjectShow({
                             </div>
                         </aside>
                     </div>
+                    {caseStudy.length > 0 && (
+                        <div className="mt-20 grid gap-5 md:grid-cols-2">
+                            {caseStudy.map(({ label, value, icon: Icon }) => (
+                                <article
+                                    key={label}
+                                    className="rounded-3xl border border-white/10 bg-white/[.035] p-7 md:p-9"
+                                >
+                                    <span className="grid size-11 place-items-center rounded-2xl bg-violet-500/10 text-violet-300">
+                                        <Icon size={20} aria-hidden="true" />
+                                    </span>
+                                    <h2 className="mt-7 text-sm font-semibold tracking-[.2em] text-violet-300 uppercase">
+                                        {label}
+                                    </h2>
+                                    <p className="mt-4 leading-8 whitespace-pre-line text-slate-300">
+                                        {value}
+                                    </p>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                    {project.images && project.images.length > 0 && (
+                        <section
+                            className="mt-24"
+                            aria-labelledby="gallery-title"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Images className="text-violet-400" />
+                                <h2
+                                    id="gallery-title"
+                                    className="text-3xl font-bold text-white"
+                                >
+                                    Project gallery
+                                </h2>
+                            </div>
+                            <p className="mt-3 text-slate-500">
+                                A closer look at the interface and key product
+                                flows.
+                            </p>
+                            <div className="mt-8 grid gap-5 md:grid-cols-2">
+                                {project.images.map((image, index) => (
+                                    <button
+                                        key={image.id}
+                                        type="button"
+                                        onClick={() => setSelectedImage(image)}
+                                        className={`group overflow-hidden rounded-3xl border border-white/10 bg-white/[.03] text-left ${index === 0 && project.images!.length % 2 === 1 ? 'md:col-span-2' : ''}`}
+                                    >
+                                        <img
+                                            src={`/storage/${image.path}`}
+                                            alt={
+                                                image.alt_text ||
+                                                `${project.title} screenshot ${index + 1}`
+                                            }
+                                            loading="lazy"
+                                            className="aspect-video w-full object-cover transition duration-500 group-hover:scale-[1.02]"
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+                    )}
                 </section>
                 {relatedProjects.length > 0 && (
                     <section className="border-t border-white/10 px-5 py-16">
@@ -144,6 +228,26 @@ export default function ProjectShow({
                     </section>
                 )}
             </main>
+            <Dialog
+                open={Boolean(selectedImage)}
+                onOpenChange={(open) => !open && setSelectedImage(null)}
+            >
+                <DialogContent className="max-w-6xl border-white/10 bg-[#090c15] p-3 text-white sm:max-w-6xl">
+                    <DialogTitle className="sr-only">
+                        Project screenshot preview
+                    </DialogTitle>
+                    {selectedImage && (
+                        <img
+                            src={`/storage/${selectedImage.path}`}
+                            alt={
+                                selectedImage.alt_text ||
+                                `${project.title} screenshot`
+                            }
+                            className="max-h-[82vh] w-full rounded-xl object-contain"
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

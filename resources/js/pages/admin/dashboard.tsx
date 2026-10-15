@@ -61,11 +61,16 @@ const emptyData: Record<string, RecordData> = {
         slug: '',
         description: '',
         content: '',
+        problem: '',
+        solution: '',
+        role: '',
+        outcome: '',
         category: '',
         technologies: '',
         github_url: '',
         demo_url: '',
         image: null,
+        gallery: [],
         is_featured: false,
         is_published: false,
         sort_order: 0,
@@ -119,7 +124,12 @@ const fields: Record<string, Array<[string, string, string]>> = {
         ['demo_url', 'Demo URL', 'url'],
         ['description', 'Short description', 'textarea'],
         ['content', 'Full case study', 'textarea'],
-        ['image', 'Screenshot', 'file'],
+        ['problem', 'Problem / context', 'textarea'],
+        ['solution', 'Solution', 'textarea'],
+        ['role', 'Your role', 'textarea'],
+        ['outcome', 'Outcome / result', 'textarea'],
+        ['image', 'Cover screenshot', 'file'],
+        ['gallery', 'Gallery screenshots', 'multifile'],
         ['sort_order', 'Sort order', 'number'],
     ],
     skills: [
@@ -160,6 +170,7 @@ function Editor({
     onDone: () => void;
 }) {
     const [previews, setPreviews] = useState<Record<string, string>>({});
+    const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
     const normalized = {
         ...initial,
         technologies: Array.isArray(initial.technologies)
@@ -187,8 +198,9 @@ function Editor({
             Object.values(previews).forEach((preview) =>
                 URL.revokeObjectURL(preview),
             );
+            galleryPreviews.forEach((preview) => URL.revokeObjectURL(preview));
         },
-        [previews],
+        [galleryPreviews, previews],
     );
 
     const selectFile = (name: string, file: File | null) => {
@@ -198,6 +210,12 @@ function Editor({
             if (current[name]) URL.revokeObjectURL(current[name]);
             return { ...current, [name]: URL.createObjectURL(file) };
         });
+    };
+    const selectGallery = (files: FileList | null) => {
+        galleryPreviews.forEach((preview) => URL.revokeObjectURL(preview));
+        const selected = files ? Array.from(files).slice(0, 8) : [];
+        setData('gallery', selected);
+        setGalleryPreviews(selected.map((file) => URL.createObjectURL(file)));
     };
     const toggles =
         resource === 'profile'
@@ -229,7 +247,7 @@ function Editor({
                             onChange={(e) => setData(name, e.target.value)}
                             className="admin-input resize-y"
                         />
-                    ) : type === 'file' ? (
+                    ) : type === 'file' || type === 'multifile' ? (
                         <div className="rounded-2xl border border-dashed border-white/15 bg-black/20 p-4">
                             {name !== 'cv_file' &&
                                 (previews[name] || mediaUrl(initial[name])) && (
@@ -252,29 +270,93 @@ function Editor({
                                     View current CV â†—
                                 </a>
                             )}
+                            {type === 'multifile' &&
+                                galleryPreviews.length > 0 && (
+                                    <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                        {galleryPreviews.map(
+                                            (preview, index) => (
+                                                <img
+                                                    key={preview}
+                                                    src={preview}
+                                                    alt={`New screenshot ${index + 1}`}
+                                                    className="aspect-video rounded-lg object-cover"
+                                                />
+                                            ),
+                                        )}
+                                    </div>
+                                )}
+                            {type === 'multifile' &&
+                                initial.images?.length > 0 && (
+                                    <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                        {initial.images.map(
+                                            (image: RecordData) => (
+                                                <div
+                                                    key={image.id}
+                                                    className="group relative"
+                                                >
+                                                    <img
+                                                        src={mediaUrl(
+                                                            image.path,
+                                                        )}
+                                                        alt={
+                                                            image.alt_text ||
+                                                            'Project screenshot'
+                                                        }
+                                                        className="aspect-video w-full rounded-lg object-cover"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            router.delete(
+                                                                `/admin/project-images/${image.id}`,
+                                                                {
+                                                                    preserveScroll: true,
+                                                                    onSuccess:
+                                                                        () =>
+                                                                            toast.success(
+                                                                                'Screenshot deleted.',
+                                                                            ),
+                                                                },
+                                                            )
+                                                        }
+                                                        className="absolute top-2 right-2 rounded-lg bg-black/75 p-2 text-rose-300 transition hover:bg-rose-500 hover:text-white"
+                                                        aria-label="Delete screenshot"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+                                )}
                             <input
                                 type="file"
+                                multiple={type === 'multifile'}
                                 accept={
                                     name === 'cv_file'
                                         ? '.pdf'
                                         : 'image/jpeg,image/png,image/webp'
                                 }
                                 onChange={(event) =>
-                                    selectFile(
-                                        name,
-                                        event.target.files?.[0] ?? null,
-                                    )
+                                    type === 'multifile'
+                                        ? selectGallery(event.target.files)
+                                        : selectFile(
+                                              name,
+                                              event.target.files?.[0] ?? null,
+                                          )
                                 }
                                 className="block w-full text-sm text-slate-400 file:mr-4 file:rounded-lg file:border-0 file:bg-violet-500/15 file:px-4 file:py-2 file:font-semibold file:text-violet-200 hover:file:bg-violet-500/25"
                             />
                             <p className="mt-3 text-xs text-slate-600">
-                                {name === 'cv_file'
-                                    ? 'PDF only, maximum 10 MB.'
-                                    : name === 'photo'
-                                      ? 'JPG, PNG or WebP · minimum 500×500 · maximum 4 MB.'
-                                      : resource === 'projects'
-                                        ? 'JPG, PNG or WebP · minimum 1000×500 · maximum 6 MB.'
-                                        : 'JPG, PNG or WebP · minimum 600×400 · maximum 4 MB.'}
+                                {type === 'multifile'
+                                    ? 'Up to 8 images · minimum 1000×500 each · maximum 6 MB each.'
+                                    : name === 'cv_file'
+                                      ? 'PDF only, maximum 10 MB.'
+                                      : name === 'photo'
+                                        ? 'JPG, PNG or WebP · minimum 500×500 · maximum 4 MB.'
+                                        : resource === 'projects'
+                                          ? 'JPG, PNG or WebP · minimum 1000×500 · maximum 6 MB.'
+                                          : 'JPG, PNG or WebP · minimum 600×400 · maximum 4 MB.'}
                             </p>
                         </div>
                     ) : (

@@ -16,7 +16,7 @@ class PortfolioController extends Controller
     {
         return Inertia::render('portfolio', [
             'profile' => Profile::query()->first(),
-            'projects' => Project::query()->where('is_published', true)->orderBy('sort_order')->latest('published_at')->get(),
+            'projects' => Project::query()->with('images')->where('is_published', true)->orderBy('sort_order')->latest('published_at')->get(),
             'skills' => Skill::query()->where('is_active', true)->orderBy('sort_order')->get(),
             'experiences' => Experience::query()->where('is_active', true)->orderByDesc('started_at')->get(),
             'certificates' => Certificate::query()->where('is_active', true)->orderBy('sort_order')->get(),
@@ -28,7 +28,7 @@ class PortfolioController extends Controller
         abort_unless($project->is_published, 404);
 
         return Inertia::render('projects/show', [
-            'project' => $project,
+            'project' => $project->load('images'),
             'relatedProjects' => Project::query()
                 ->where('is_published', true)
                 ->whereKeyNot($project->getKey())

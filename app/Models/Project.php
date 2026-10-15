@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
@@ -12,6 +13,10 @@ class Project extends Model
         'description',
         'category',
         'content',
+        'problem',
+        'solution',
+        'role',
+        'outcome',
         'image',
         'technologies',
         'github_url',
@@ -30,5 +35,10 @@ class Project extends Model
             'is_published' => 'boolean',
             'published_at' => 'datetime',
         ];
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProjectImage::class)->orderBy('sort_order');
     }
 }
