@@ -174,7 +174,13 @@ export default function Portfolio({
             ? projects
             : projects.filter((project) => project.category === category);
     const groupedSkills = useMemo(
-        () => Object.groupBy(skills, (skill) => skill.category),
+        () =>
+            skills.reduce<Record<string, Skill[]>>((groups, skill) => {
+                const categoryName = skill.category || 'Other';
+                (groups[categoryName] ??= []).push(skill);
+
+                return groups;
+            }, {}),
         [skills],
     );
 
