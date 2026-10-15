@@ -15,6 +15,20 @@ import {
     Sparkles,
     X,
 } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import {
+    SiGit,
+    SiGithub,
+    SiInertia,
+    SiJavascript,
+    SiLaravel,
+    SiMysql,
+    SiPhp,
+    SiReact,
+    SiSqlite,
+    SiTailwindcss,
+    SiTypescript,
+} from 'react-icons/si';
 import { useMemo, useState } from 'react';
 
 type Profile = {
@@ -75,14 +89,57 @@ const defaults: Profile = {
     location: 'Indonesia',
     available_for_work: true,
 };
-const stack = [
-    'Laravel 13',
-    'React',
-    'TypeScript',
-    'Inertia.js',
-    'Tailwind CSS',
-    'SQLite',
+type Technology = {
+    name: string;
+    icon: IconType;
+    color: string;
+    glow: string;
+};
+
+const stack: Technology[] = [
+    {
+        name: 'Laravel 13',
+        icon: SiLaravel,
+        color: '#ff2d20',
+        glow: '255,45,32',
+    },
+    { name: 'React', icon: SiReact, color: '#61dafb', glow: '97,218,251' },
+    {
+        name: 'TypeScript',
+        icon: SiTypescript,
+        color: '#3178c6',
+        glow: '49,120,198',
+    },
+    {
+        name: 'Inertia.js',
+        icon: SiInertia,
+        color: '#9553e9',
+        glow: '149,83,233',
+    },
+    {
+        name: 'Tailwind CSS',
+        icon: SiTailwindcss,
+        color: '#06b6d4',
+        glow: '6,182,212',
+    },
+    { name: 'SQLite', icon: SiSqlite, color: '#7dc9e8', glow: '125,201,232' },
 ];
+
+const skillIcons: Record<string, IconType> = {
+    laravel: SiLaravel,
+    react: SiReact,
+    typescript: SiTypescript,
+    javascript: SiJavascript,
+    inertia: SiInertia,
+    'inertia.js': SiInertia,
+    tailwind: SiTailwindcss,
+    'tailwind css': SiTailwindcss,
+    php: SiPhp,
+    mysql: SiMysql,
+    sqlite: SiSqlite,
+    git: SiGit,
+    github: SiGithub,
+};
 const nav = [
     ['About', '#about'],
     ['Experience', '#experience'],
@@ -148,6 +205,33 @@ function Heading({
     );
 }
 
+function TechMark({
+    technology,
+    compact = false,
+}: {
+    technology: Technology;
+    compact?: boolean;
+}) {
+    const Icon = technology.icon;
+    return (
+        <span
+            className={`group/tech inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b0f19]/80 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-white/20 ${compact ? 'px-4 py-3' : 'px-5 py-4'}`}
+            style={{ boxShadow: `0 14px 45px rgba(${technology.glow}, .08)` }}
+        >
+            <span className="grid size-9 place-items-center rounded-xl bg-white/[.06]">
+                <Icon
+                    size={compact ? 18 : 21}
+                    style={{ color: technology.color }}
+                    aria-hidden="true"
+                />
+            </span>
+            <span className="font-mono text-xs font-semibold tracking-[.08em] text-slate-300 uppercase">
+                {technology.name}
+            </span>
+        </span>
+    );
+}
+
 export default function Portfolio({
     profile: storedProfile,
     projects,
@@ -155,6 +239,7 @@ export default function Portfolio({
     experiences,
     certificates,
 }: Props) {
+    const reduceMotion = useReducedMotion();
     const profile = {
         ...defaults,
         ...storedProfile,
@@ -330,6 +415,40 @@ export default function Portfolio({
                             className="relative mx-auto w-full max-w-md"
                         >
                             <div className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-br from-violet-500/30 to-cyan-500/10 blur-2xl" />
+                            {stack.slice(0, 4).map((technology, index) => {
+                                const Icon = technology.icon;
+                                const positions = [
+                                    '-left-8 top-16',
+                                    '-right-8 top-28',
+                                    '-left-10 bottom-28',
+                                    '-right-8 bottom-16',
+                                ];
+
+                                return (
+                                    <motion.div
+                                        key={technology.name}
+                                        className={`absolute z-20 hidden size-14 items-center justify-center rounded-2xl border border-white/15 bg-[#0b1020]/90 shadow-2xl backdrop-blur-xl sm:flex ${positions[index]}`}
+                                        animate={
+                                            reduceMotion
+                                                ? undefined
+                                                : { y: [0, -7, 0] }
+                                        }
+                                        transition={{
+                                            duration: 3.4 + index * 0.4,
+                                            repeat: Infinity,
+                                            ease: 'easeInOut',
+                                            delay: index * 0.3,
+                                        }}
+                                        title={technology.name}
+                                    >
+                                        <Icon
+                                            size={25}
+                                            style={{ color: technology.color }}
+                                            aria-hidden="true"
+                                        />
+                                    </motion.div>
+                                );
+                            })}
                             <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#101522] p-4 shadow-2xl shadow-black/50">
                                 <div className="aspect-[4/5] overflow-hidden rounded-[1.4rem] bg-gradient-to-br from-violet-950 to-slate-950">
                                     {profile.photo ? (
@@ -367,15 +486,17 @@ export default function Portfolio({
                     </div>
                 </section>
 
-                <section className="border-y border-white/[.07] bg-white/[.025] py-6">
-                    <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-5">
-                        {stack.map((item) => (
-                            <span
-                                key={item}
-                                className="font-mono text-xs tracking-[.16em] text-slate-500 uppercase"
-                            >
-                                {item}
-                            </span>
+                <section
+                    className="overflow-hidden border-y border-white/[.07] bg-white/[.025] py-5"
+                    aria-label="Core technology stack"
+                >
+                    <div className="tech-marquee flex w-max gap-4 px-2">
+                        {[...stack, ...stack].map((technology, index) => (
+                            <TechMark
+                                key={`${technology.name}-${index}`}
+                                technology={technology}
+                                compact
+                            />
                         ))}
                     </div>
                 </section>
@@ -485,14 +606,26 @@ export default function Portfolio({
                                                 {group}
                                             </p>
                                             <div className="mt-5 flex flex-wrap gap-2">
-                                                {items?.map((skill) => (
-                                                    <span
-                                                        key={skill.id}
-                                                        className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-sm text-slate-300"
-                                                    >
-                                                        {skill.name}
-                                                    </span>
-                                                ))}
+                                                {items?.map((skill) => {
+                                                    const SkillIcon =
+                                                        skillIcons[
+                                                            skill.name.toLowerCase()
+                                                        ] || Code2;
+
+                                                    return (
+                                                        <span
+                                                            key={skill.id}
+                                                            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-slate-300 transition hover:border-violet-400/30 hover:bg-violet-500/10"
+                                                        >
+                                                            <SkillIcon
+                                                                size={15}
+                                                                className="text-violet-300"
+                                                                aria-hidden="true"
+                                                            />
+                                                            {skill.name}
+                                                        </span>
+                                                    );
+                                                })}
                                             </div>
                                         </Reveal>
                                     ),
@@ -504,13 +637,12 @@ export default function Portfolio({
                                             Current stack
                                         </p>
                                         <div className="mt-5 flex flex-wrap gap-2">
-                                            {stack.map((item) => (
-                                                <span
-                                                    key={item}
-                                                    className="rounded-full border border-white/10 px-4 py-2 text-sm"
-                                                >
-                                                    {item}
-                                                </span>
+                                            {stack.map((technology) => (
+                                                <TechMark
+                                                    key={technology.name}
+                                                    technology={technology}
+                                                    compact
+                                                />
                                             ))}
                                         </div>
                                     </div>

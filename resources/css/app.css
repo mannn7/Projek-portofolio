@@ -175,3 +175,20 @@
     background-size: 52px 52px;
     mask-image: linear-gradient(to bottom, black, transparent 88%);
 }
+
+@keyframes tech-marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(calc(-50% - 0.5rem));
+    }
+}
+
+.tech-marquee {
+    animation: tech-marquee 28s linear infinite;
+}
+
+.tech-marquee:hover {
+    animation-play-state: paused;
+}
