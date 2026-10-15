@@ -50,8 +50,9 @@ class PortfolioDashboardController extends Controller
             $record = new $model;
         }
 
-        $this->storeUploads($request, $resource, $data, $record);
+        $replacedFiles = $this->prepareUploads($request, $resource, $data, $record);
         $record->fill($data)->save();
+        $this->deleteReplacedFiles($replacedFiles);
 
         return back()->with('success', ucfirst($resource).' saved successfully.');
     }
@@ -60,8 +61,9 @@ class PortfolioDashboardController extends Controller
     {
         $record = $this->modelFor($resource)::query()->findOrFail($id);
         $data = $this->validated($request, $resource, $id);
-        $this->storeUploads($request, $resource, $data, $record);
+        $replacedFiles = $this->prepareUploads($request, $resource, $data, $record);
         $record->update($data);
+        $this->deleteReplacedFiles($replacedFiles);
 
         return back()->with('success', ucfirst($resource).' updated successfully.');
     }
@@ -80,6 +82,16 @@ class PortfolioDashboardController extends Controller
         $record->delete();
 
         return back()->with('success', 'Item deleted successfully.');
+    }
+
+    public function toggleProject(Project $project): RedirectResponse
+    {
+        $project->update([
+            'is_published' => ! $project->is_published,
+            'published_at' => $project->is_published ? null : now(),
+        ]);
+
+        return back()->with('success', $project->is_published ? 'Project published.' : 'Project moved to draft.');
     }
 
     /** @return class-string<Model> */
@@ -108,7 +120,7 @@ class PortfolioDashboardController extends Controller
                 'linkedin_url' => ['nullable', 'url', 'max:255'],
                 'location' => ['nullable', 'string', 'max:160'],
                 'available_for_work' => ['boolean'],
-                'photo' => ['nullable', 'image', 'max:4096'],
+                'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'dimensions:min_width=500,min_height=500', 'max:4096'],
                 'cv_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
             ],
             'projects' => [
@@ -120,7 +132,7 @@ class PortfolioDashboardController extends Controller
                 'technologies' => ['nullable', 'string', 'max:1000'],
                 'github_url' => ['nullable', 'url', 'max:255'],
                 'demo_url' => ['nullable', 'url', 'max:255'],
-                'image' => ['nullable', 'image', 'max:6144'],
+                'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'dimensions:min_width=1000,min_height=500', 'max:6144'],
                 'is_featured' => ['boolean'], 'is_published' => ['boolean'],
                 'sort_order' => ['integer', 'min:0', 'max:9999'],
             ],
@@ -140,7 +152,7 @@ class PortfolioDashboardController extends Controller
             'certificates' => [
                 'name' => ['required', 'string', 'max:160'], 'issuer' => ['required', 'string', 'max:160'],
                 'issued_at' => ['nullable', 'date'], 'credential_url' => ['nullable', 'url', 'max:255'],
-                'image' => ['nullable', 'image', 'max:4096'],
+                'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'dimensions:min_width=600,min_height=400', 'max:4096'],
                 'sort_order' => ['integer', 'min:0', 'max:9999'], 'is_active' => ['boolean'],
             ],
             default => abort(404),
@@ -160,8 +172,10 @@ class PortfolioDashboardController extends Controller
     }
 
     /** @param array<string, mixed> $data */
-    private function storeUploads(Request $request, string $resource, array &$data, Model $record): void
+    private function prepareUploads(Request $request, string $resource, array &$data, Model $record): array
     {
+        $replacedFiles = [];
+
         foreach (['photo', 'cv_file', 'image'] as $field) {
             if (! $request->hasFile($field)) {
                 unset($data[$field]);
@@ -169,9 +183,19 @@ class PortfolioDashboardController extends Controller
                 continue;
             }
             if ($record->getAttribute($field)) {
-                Storage::disk('public')->delete($record->getAttribute($field));
+                $replacedFiles[] = $record->getAttribute($field);
             }
             $data[$field] = $request->file($field)->store($resource, 'public');
+        }
+
+        return $replacedFiles;
+    }
+
+    /** @param array<int, string> $paths */
+    private function deleteReplacedFiles(array $paths): void
+    {
+        if ($paths !== []) {
+            Storage::disk('public')->delete($paths);
         }
     }
 }

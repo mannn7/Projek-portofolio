@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class PortfolioTest extends TestCase
@@ -47,5 +48,38 @@ class PortfolioTest extends TestCase
         $this->get('/admin')->assertRedirect('/login');
         $this->actingAs($other)->get('/admin')->assertForbidden();
         $this->actingAs($admin)->get('/admin')->assertOk()->assertInertia(fn ($page) => $page->component('admin/dashboard'));
+    }
+
+    public function test_admin_can_toggle_project_publication(): void
+    {
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $project = Project::query()->create([
+            'title' => 'Draft project', 'slug' => 'draft-project', 'is_published' => false,
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.projects.toggle', $project))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('projects', [
+            'id' => $project->id,
+            'is_published' => true,
+        ]);
+        $this->assertNotNull($project->fresh()->published_at);
+    }
+
+    public function test_profile_photo_must_meet_minimum_dimensions(): void
+    {
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.store', 'profile'), [
+                'name' => 'Firman Aji',
+                'available_for_work' => true,
+                'photo' => UploadedFile::fake()->image('small.jpg', 120, 120),
+            ])
+            ->assertSessionHasErrors('photo');
     }
 }

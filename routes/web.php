@@ -49,6 +49,8 @@ Route::prefix('admin')
         Route::delete('/content/{resource}/{id}', [PortfolioDashboardController::class, 'destroy'])
             ->whereIn('resource', ['projects', 'skills', 'experiences', 'certificates'])
             ->name('content.destroy');
+        Route::patch('/projects/{project}/toggle', [PortfolioDashboardController::class, 'toggleProject'])
+            ->name('projects.toggle');
     });
 
 /*

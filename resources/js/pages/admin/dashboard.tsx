@@ -7,11 +7,23 @@ import {
     LogOut,
     Plus,
     Save,
+    Search,
     Sparkles,
     Trash2,
     UserRound,
+    Eye,
+    EyeOff,
 } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 type RecordData = Record<string, any> & { id?: number };
 type Props = {
@@ -135,6 +147,9 @@ const fields: Record<string, Array<[string, string, string]>> = {
     ],
 };
 
+const mediaUrl = (path?: string) =>
+    path ? (path.startsWith('/') ? path : `/storage/${path}`) : undefined;
+
 function Editor({
     resource,
     initial,
@@ -144,6 +159,7 @@ function Editor({
     initial: RecordData;
     onDone: () => void;
 }) {
+    const [previews, setPreviews] = useState<Record<string, string>>({});
     const normalized = {
         ...initial,
         technologies: Array.isArray(initial.technologies)
@@ -160,7 +176,27 @@ function Editor({
         post(endpoint, {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: onDone,
+            onSuccess: () => {
+                toast.success('Content saved successfully.');
+                onDone();
+            },
+        });
+    };
+    useEffect(
+        () => () => {
+            Object.values(previews).forEach((preview) =>
+                URL.revokeObjectURL(preview),
+            );
+        },
+        [previews],
+    );
+
+    const selectFile = (name: string, file: File | null) => {
+        setData(name, file);
+        if (!file || name === 'cv_file') return;
+        setPreviews((current) => {
+            if (current[name]) URL.revokeObjectURL(current[name]);
+            return { ...current, [name]: URL.createObjectURL(file) };
         });
     };
     const toggles =
@@ -193,27 +229,64 @@ function Editor({
                             onChange={(e) => setData(name, e.target.value)}
                             className="admin-input resize-y"
                         />
+                    ) : type === 'file' ? (
+                        <div className="rounded-2xl border border-dashed border-white/15 bg-black/20 p-4">
+                            {name !== 'cv_file' &&
+                                (previews[name] || mediaUrl(initial[name])) && (
+                                    <img
+                                        src={
+                                            previews[name] ||
+                                            mediaUrl(initial[name])
+                                        }
+                                        alt={`${label} preview`}
+                                        className="mb-4 aspect-video w-full rounded-xl object-cover"
+                                    />
+                                )}
+                            {name === 'cv_file' && initial.cv_file && (
+                                <a
+                                    href={mediaUrl(initial.cv_file)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mb-4 block text-sm text-violet-300 hover:text-white"
+                                >
+                                    View current CV â†—
+                                </a>
+                            )}
+                            <input
+                                type="file"
+                                accept={
+                                    name === 'cv_file'
+                                        ? '.pdf'
+                                        : 'image/jpeg,image/png,image/webp'
+                                }
+                                onChange={(event) =>
+                                    selectFile(
+                                        name,
+                                        event.target.files?.[0] ?? null,
+                                    )
+                                }
+                                className="block w-full text-sm text-slate-400 file:mr-4 file:rounded-lg file:border-0 file:bg-violet-500/15 file:px-4 file:py-2 file:font-semibold file:text-violet-200 hover:file:bg-violet-500/25"
+                            />
+                            <p className="mt-3 text-xs text-slate-600">
+                                {name === 'cv_file'
+                                    ? 'PDF only, maximum 10 MB.'
+                                    : name === 'photo'
+                                      ? 'JPG, PNG or WebP · minimum 500×500 · maximum 4 MB.'
+                                      : resource === 'projects'
+                                        ? 'JPG, PNG or WebP · minimum 1000×500 · maximum 6 MB.'
+                                        : 'JPG, PNG or WebP · minimum 600×400 · maximum 4 MB.'}
+                            </p>
+                        </div>
                     ) : (
                         <input
                             type={type}
-                            accept={
-                                name === 'cv_file'
-                                    ? '.pdf'
-                                    : type === 'file'
-                                      ? 'image/*'
-                                      : undefined
-                            }
-                            value={
-                                type === 'file' ? undefined : (data[name] ?? '')
-                            }
+                            value={data[name] ?? ''}
                             onChange={(e) =>
                                 setData(
                                     name,
-                                    type === 'file'
-                                        ? (e.target.files?.[0] ?? null)
-                                        : type === 'number'
-                                          ? Number(e.target.value)
-                                          : e.target.value,
+                                    type === 'number'
+                                        ? Number(e.target.value)
+                                        : e.target.value,
                                 )
                             }
                             className="admin-input"
@@ -265,6 +338,9 @@ function Editor({
 export default function AdminDashboard(props: Props) {
     const [active, setActive] = useState('profile');
     const [editing, setEditing] = useState<RecordData | null>(null);
+    const [query, setQuery] = useState('');
+    const [projectStatus, setProjectStatus] = useState('all');
+    const [deleting, setDeleting] = useState<RecordData | null>(null);
     const records = useMemo(
         () =>
             active === 'profile'
@@ -274,13 +350,58 @@ export default function AdminDashboard(props: Props) {
                 : ((props[active as keyof Props] as RecordData[]) ?? []),
         [active, props],
     );
+    const filteredRecords = useMemo(
+        () =>
+            records.filter((item) => {
+                const haystack = [
+                    item.title,
+                    item.name,
+                    item.role,
+                    item.company,
+                    item.category,
+                    item.issuer,
+                ]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLowerCase();
+                const matchesQuery = haystack.includes(query.toLowerCase());
+                const matchesStatus =
+                    active !== 'projects' ||
+                    projectStatus === 'all' ||
+                    (projectStatus === 'published'
+                        ? item.is_published
+                        : !item.is_published);
+
+                return matchesQuery && matchesStatus;
+            }),
+        [active, projectStatus, query, records],
+    );
     const titleFor = (item: RecordData) =>
         item.title || item.name || item.role || 'Item';
-    const remove = (item: RecordData) =>
-        confirm(`Delete ${titleFor(item)}?`) &&
-        router.delete(`/admin/content/${active}/${item.id}`, {
+    const remove = () => {
+        if (!deleting) return;
+        router.delete(`/admin/content/${active}/${deleting.id}`, {
             preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Content deleted.');
+                setDeleting(null);
+            },
         });
+    };
+    const toggleProject = (item: RecordData) =>
+        router.patch(
+            `/admin/projects/${item.id}/toggle`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    toast.success(
+                        item.is_published
+                            ? 'Project moved to draft.'
+                            : 'Project published.',
+                    ),
+            },
+        );
 
     return (
         <div className="min-h-screen bg-[#070a12] text-slate-200">
@@ -315,6 +436,8 @@ export default function AdminDashboard(props: Props) {
                             onClick={() => {
                                 setActive(key);
                                 setEditing(null);
+                                setQuery('');
+                                setProjectStatus('all');
                             }}
                             className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm transition ${active === key ? 'bg-violet-500 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
                         >
@@ -367,26 +490,94 @@ export default function AdminDashboard(props: Props) {
                             onDone={() => setEditing(null)}
                         />
                     )}
+                    {!editing && records.length > 0 && active !== 'profile' && (
+                        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-3 sm:flex-row">
+                            <label className="relative flex-1">
+                                <Search
+                                    className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-600"
+                                    size={17}
+                                />
+                                <span className="sr-only">Search content</span>
+                                <input
+                                    value={query}
+                                    onChange={(event) =>
+                                        setQuery(event.target.value)
+                                    }
+                                    placeholder={`Search ${active}…`}
+                                    className="admin-input pl-10"
+                                />
+                            </label>
+                            {active === 'projects' && (
+                                <select
+                                    value={projectStatus}
+                                    onChange={(event) =>
+                                        setProjectStatus(event.target.value)
+                                    }
+                                    className="admin-input sm:w-44"
+                                    aria-label="Filter project status"
+                                >
+                                    <option value="all">All status</option>
+                                    <option value="published">Published</option>
+                                    <option value="draft">Draft</option>
+                                </select>
+                            )}
+                        </div>
+                    )}
                     {!editing && records.length > 0 && (
                         <div className="space-y-3">
-                            {records.map((item) => (
+                            {filteredRecords.map((item) => (
                                 <article
                                     key={item.id}
                                     className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5"
                                 >
-                                    <div>
-                                        <h2 className="font-semibold text-white">
-                                            {titleFor(item)}
-                                        </h2>
-                                        <p className="mt-1 text-sm text-slate-500">
-                                            {item.category ||
-                                                item.company ||
-                                                item.issuer ||
-                                                item.headline ||
-                                                'Portfolio content'}
-                                        </p>
+                                    <div className="flex min-w-0 items-center gap-4">
+                                        {(item.image || item.photo) && (
+                                            <img
+                                                src={mediaUrl(
+                                                    item.image || item.photo,
+                                                )}
+                                                alt=""
+                                                className="size-14 shrink-0 rounded-xl object-cover"
+                                            />
+                                        )}
+                                        <div className="min-w-0">
+                                            <h2 className="font-semibold text-white">
+                                                {titleFor(item)}
+                                            </h2>
+                                            <p className="mt-1 text-sm text-slate-500">
+                                                {item.category ||
+                                                    item.company ||
+                                                    item.issuer ||
+                                                    item.headline ||
+                                                    'Portfolio content'}
+                                            </p>
+                                        </div>
                                     </div>
                                     <div className="flex gap-2">
+                                        {active === 'projects' && (
+                                            <button
+                                                onClick={() =>
+                                                    toggleProject(item)
+                                                }
+                                                className={`admin-ghost ${item.is_published ? 'text-emerald-300' : ''}`}
+                                                title={
+                                                    item.is_published
+                                                        ? 'Move to draft'
+                                                        : 'Publish project'
+                                                }
+                                            >
+                                                {item.is_published ? (
+                                                    <Eye size={16} />
+                                                ) : (
+                                                    <EyeOff size={16} />
+                                                )}
+                                                <span className="hidden xl:inline">
+                                                    {item.is_published
+                                                        ? 'Published'
+                                                        : 'Draft'}
+                                                </span>
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => setEditing(item)}
                                             className="admin-ghost"
@@ -395,7 +586,9 @@ export default function AdminDashboard(props: Props) {
                                         </button>
                                         {active !== 'profile' && (
                                             <button
-                                                onClick={() => remove(item)}
+                                                onClick={() =>
+                                                    setDeleting(item)
+                                                }
                                                 className="rounded-lg p-2 text-rose-400 hover:bg-rose-500/10"
                                                 aria-label={`Delete ${titleFor(item)}`}
                                             >
@@ -408,6 +601,13 @@ export default function AdminDashboard(props: Props) {
                         </div>
                     )}
                     {!editing &&
+                        records.length > 0 &&
+                        filteredRecords.length === 0 && (
+                            <div className="rounded-3xl border border-dashed border-white/15 p-12 text-center text-slate-500">
+                                No content matches your search.
+                            </div>
+                        )}
+                    {!editing &&
                         records.length === 0 &&
                         active !== 'profile' && (
                             <div className="rounded-3xl border border-dashed border-white/15 p-14 text-center text-slate-500">
@@ -417,6 +617,36 @@ export default function AdminDashboard(props: Props) {
                         )}
                 </section>
             </main>
+            <Dialog
+                open={Boolean(deleting)}
+                onOpenChange={(open) => !open && setDeleting(null)}
+            >
+                <DialogContent className="border-white/10 bg-[#101522] text-white">
+                    <DialogHeader>
+                        <DialogTitle>
+                            Delete {deleting ? titleFor(deleting) : 'content'}?
+                        </DialogTitle>
+                        <DialogDescription className="text-slate-400">
+                            This permanently removes the database record and its
+                            uploaded media. This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <button
+                            onClick={() => setDeleting(null)}
+                            className="admin-ghost"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={remove}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400"
+                        >
+                            <Trash2 size={16} /> Delete permanently
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
