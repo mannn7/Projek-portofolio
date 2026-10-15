@@ -72,6 +72,27 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('admin.index'));
     }
 
+    public function test_authenticated_portfolio_admin_visiting_login_is_redirected_to_portfolio_dashboard(): void
+    {
+        $admin = User::factory()->create(['email' => 'firman@example.com']);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $response = $this->actingAs($admin)->get(route('login'));
+
+        $response->assertRedirect(route('admin.index', absolute: false));
+    }
+
+    public function test_authenticated_team_user_visiting_login_is_redirected_to_current_team_dashboard(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('login'));
+
+        $response->assertRedirect(route('dashboard', [
+            'current_team' => $user->currentTeam->slug,
+        ], absolute: false));
+    }
+
     public function test_users_with_two_factor_enabled_are_redirected_to_two_factor_challenge()
     {
         if (! Features::canManageTwoFactorAuthentication()) {

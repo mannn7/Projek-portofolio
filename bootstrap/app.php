@@ -18,6 +18,28 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        $middleware->redirectUsersTo(function (Request $request): string {
+            $user = $request->user();
+            $adminEmail = config('portfolio.admin_email');
+
+            if (
+                $user &&
+                is_string($adminEmail) &&
+                $adminEmail !== '' &&
+                strcasecmp($user->email, $adminEmail) === 0
+            ) {
+                return route('admin.index', absolute: false);
+            }
+
+            if ($currentTeam = $user?->currentTeam) {
+                return route('dashboard', [
+                    'current_team' => $currentTeam->slug,
+                ], absolute: false);
+            }
+
+            return route('home', absolute: false);
+        });
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
