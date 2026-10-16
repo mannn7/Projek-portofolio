@@ -138,4 +138,39 @@ class PortfolioTest extends TestCase
             Storage::disk('public')->assertExists($image->path);
         }
     }
+
+    public function test_admin_can_create_experience_and_certificate_content(): void
+    {
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.store', 'experiences'), [
+                'role' => 'Software Engineer',
+                'company' => 'Example Company',
+                'started_at' => '2025-01-01',
+                'sort_order' => 0,
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.store', 'certificates'), [
+                'name' => 'Verified Certificate',
+                'issuer' => 'Example Issuer',
+                'issued_at' => '2025-02-01',
+                'sort_order' => 0,
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('experiences', [
+            'role' => 'Software Engineer',
+            'is_active' => true,
+        ]);
+        $this->assertDatabaseHas('certificates', [
+            'name' => 'Verified Certificate',
+            'is_active' => true,
+        ]);
+    }
 }

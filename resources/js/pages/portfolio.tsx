@@ -576,16 +576,17 @@ export default function Portfolio({
                         </Reveal>
                     </div>
                 </section>
-                {experiences.length > 0 && (
-                    <section
-                        id="experience"
-                        className="scroll-mt-24 bg-white/[.02] px-5 py-28 lg:px-8"
-                    >
-                        <div className="mx-auto max-w-7xl">
-                            <Heading
-                                eyebrow="02 / Experience"
-                                title="Where I’ve contributed."
-                            />
+                <section
+                    id="experience"
+                    className="content-auto scroll-mt-24 bg-white/[.02] px-5 py-28 lg:px-8"
+                >
+                    <div className="mx-auto max-w-7xl">
+                        <Heading
+                            eyebrow="02 / Experience"
+                            title="Where I’ve contributed."
+                            copy="Professional experience published from the private portfolio CMS."
+                        />
+                        {experiences.length > 0 ? (
                             <div className="border-l border-white/10">
                                 {experiences.map((item, index) => (
                                     <Reveal
@@ -617,9 +618,27 @@ export default function Portfolio({
                                     </Reveal>
                                 ))}
                             </div>
-                        </div>
-                    </section>
-                )}
+                        ) : (
+                            <Reveal>
+                                <div className="rounded-3xl border border-dashed border-white/15 bg-white/[.02] p-12 text-center sm:p-16">
+                                    <BriefcaseBusiness
+                                        className="mx-auto text-violet-400"
+                                        size={38}
+                                        aria-hidden="true"
+                                    />
+                                    <h3 className="mt-5 text-xl font-semibold text-white">
+                                        Experience is being prepared
+                                    </h3>
+                                    <p className="mx-auto mt-3 max-w-lg leading-7 text-slate-500">
+                                        Verified roles and contributions will
+                                        appear here after they are added and
+                                        activated in the CMS.
+                                    </p>
+                                </div>
+                            </Reveal>
+                        )}
+                    </div>
+                </section>
                 <section
                     id="skills"
                     className="scroll-mt-24 px-5 py-28 lg:px-8"
@@ -796,16 +815,17 @@ export default function Portfolio({
                         )}
                     </div>
                 </section>
-                {certificates.length > 0 && (
-                    <section
-                        id="certificates"
-                        className="content-auto scroll-mt-24 px-5 py-28 lg:px-8"
-                    >
-                        <div className="mx-auto max-w-7xl">
-                            <Heading
-                                eyebrow="05 / Certificates"
-                                title="Continuous learning."
-                            />
+                <section
+                    id="certificates"
+                    className="content-auto scroll-mt-24 px-5 py-28 lg:px-8"
+                >
+                    <div className="mx-auto max-w-7xl">
+                        <Heading
+                            eyebrow="05 / Certificates"
+                            title="Continuous learning."
+                            copy="Verified certificates and credentials managed from the private portfolio CMS."
+                        />
+                        {certificates.length > 0 ? (
                             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                                 {certificates.map((item) => (
                                     <Reveal key={item.id}>
@@ -835,9 +855,27 @@ export default function Portfolio({
                                     </Reveal>
                                 ))}
                             </div>
-                        </div>
-                    </section>
-                )}
+                        ) : (
+                            <Reveal>
+                                <div className="rounded-3xl border border-dashed border-white/15 bg-white/[.02] p-12 text-center sm:p-16">
+                                    <Award
+                                        className="mx-auto text-violet-400"
+                                        size={38}
+                                        aria-hidden="true"
+                                    />
+                                    <h3 className="mt-5 text-xl font-semibold text-white">
+                                        Certificates are being prepared
+                                    </h3>
+                                    <p className="mx-auto mt-3 max-w-lg leading-7 text-slate-500">
+                                        Verified certificates will appear here
+                                        after they are added and activated in
+                                        the CMS.
+                                    </p>
+                                </div>
+                            </Reveal>
+                        )}
+                    </div>
+                </section>
                 <section
                     id="contact"
                     className="scroll-mt-24 px-5 pt-24 pb-12 lg:px-8"
