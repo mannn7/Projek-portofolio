@@ -1,46 +1,8 @@
 import { Link } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Palette,
-    ShieldCheck,
-    UserRound,
-    UsersRound,
-} from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
-import { useCurrentUrl } from '@/hooks/use-current-url';
-import { cn, toUrl } from '@/lib/utils';
-import { edit as editAppearance } from '@/routes/appearance';
-import { edit } from '@/routes/profile';
-import { edit as editSecurity } from '@/routes/security';
-import { index as teams } from '@/routes/teams';
-import type { NavItem } from '@/types';
-
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: edit(),
-        icon: UserRound,
-    },
-    {
-        title: 'Security',
-        href: editSecurity(),
-        icon: ShieldCheck,
-    },
-    {
-        title: 'Teams',
-        href: teams(),
-        icon: UsersRound,
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-        icon: Palette,
-    },
-];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
-    const { isCurrentOrParentUrl } = useCurrentUrl();
-
     return (
         <div className="relative isolate min-h-[calc(100svh-4rem)] overflow-hidden px-4 py-8 sm:px-7 lg:px-10 lg:py-12">
             <div className="pointer-events-none absolute top-0 right-0 -z-10 h-96 w-96 rounded-full bg-violet-600/10 blur-[110px]" />
@@ -68,37 +30,9 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                     </p>
                 </div>
 
-                <div className="grid gap-7 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
-                    <aside className="w-full">
-                        <nav
-                            className="flex gap-2 overflow-x-auto rounded-2xl border border-white/8 bg-white/[0.025] p-2 lg:flex-col"
-                            aria-label="Settings"
-                        >
-                            {sidebarNavItems.map((item, index) => (
-                                <Link
-                                    key={`${toUrl(item.href)}-${index}`}
-                                    href={item.href}
-                                    className={cn(
-                                        'flex min-w-max items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white lg:w-full',
-                                        isCurrentOrParentUrl(item.href) &&
-                                            'bg-gradient-to-r from-violet-500/20 to-violet-500/5 text-violet-200 ring-1 ring-violet-400/15',
-                                    )}
-                                >
-                                    {item.icon && (
-                                        <item.icon className="size-4" />
-                                    )}
-                                    {item.title}
-                                </Link>
-                            ))}
-                        </nav>
-                    </aside>
-
-                    <div className="min-w-0">
-                        <section className="space-y-6 [&>div]:rounded-2xl [&>div]:border [&>div]:border-white/8 [&>div]:bg-white/[0.025] [&>div]:p-5 [&>div]:shadow-2xl [&>div]:shadow-black/10 sm:[&>div]:p-7">
-                            {children}
-                        </section>
-                    </div>
-                </div>
+                <section className="max-w-3xl space-y-6 [&>div]:rounded-2xl [&>div]:border [&>div]:border-white/8 [&>div]:bg-white/[0.025] [&>div]:p-5 [&>div]:shadow-2xl [&>div]:shadow-black/10 sm:[&>div]:p-7">
+                    {children}
+                </section>
             </div>
         </div>
     );
