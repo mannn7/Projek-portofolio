@@ -23,7 +23,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                         <SidebarMenuButton
                             asChild
                             isActive={isCurrentUrl(item.href)}
-                            className="h-10 rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white data-[active=true]:bg-violet-500/15 data-[active=true]:text-violet-300"
+                            className="h-10 rounded-xl text-slate-600 transition hover:bg-violet-50 hover:text-slate-950 data-[active=true]:bg-violet-100 data-[active=true]:font-semibold data-[active=true]:text-violet-700 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white dark:data-[active=true]:bg-violet-500/15 dark:data-[active=true]:text-violet-300"
                             tooltip={{ children: item.title }}
                         >
                             <Link href={item.href} prefetch>

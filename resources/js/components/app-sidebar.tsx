@@ -58,7 +58,7 @@ export function AppSidebar() {
         <Sidebar
             collapsible="icon"
             variant="inset"
-            className="border-r border-white/5"
+            className="border-r border-slate-200 dark:border-white/5"
         >
             <SidebarHeader>
                 <SidebarMenu>

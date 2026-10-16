@@ -13,7 +13,7 @@ export default function AppSidebarLayout({
             <AppSidebar />
             <AppContent
                 variant="sidebar"
-                className="min-w-0 overflow-x-clip bg-[#070b14] text-slate-100"
+                className="min-w-0 overflow-x-clip bg-slate-50 text-slate-950 dark:bg-[#070b14] dark:text-slate-100"
             >
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
