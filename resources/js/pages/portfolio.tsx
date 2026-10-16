@@ -32,6 +32,13 @@ import {
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import type { SeoData } from '@/types/seo';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 
 type Profile = {
     name: string;
@@ -844,29 +851,87 @@ export default function Portfolio({
                             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                                 {certificates.map((item) => (
                                     <Reveal key={item.id}>
-                                        <a
-                                            href={
-                                                item.credential_url || undefined
-                                            }
-                                            target={
-                                                item.credential_url
-                                                    ? '_blank'
-                                                    : undefined
-                                            }
-                                            rel="noreferrer"
-                                            className="block rounded-3xl border border-white/10 bg-white/[.03] p-7 transition hover:-translate-y-1 hover:border-violet-400/30"
-                                        >
-                                            <Award className="text-violet-400" />
-                                            <h3 className="mt-7 text-lg font-semibold text-white">
-                                                {item.name}
-                                            </h3>
-                                            <p className="mt-2 text-sm text-slate-500">
-                                                {item.issuer}
-                                                {item.issued_at
-                                                    ? ` · ${formatDate(item.issued_at)}`
-                                                    : ''}
-                                            </p>
-                                        </a>
+                                        <article className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[.03] transition hover:-translate-y-1 hover:border-violet-400/30">
+                                            {item.image ? (
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <button
+                                                            type="button"
+                                                            className="relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
+                                                            aria-label={`Preview certificate ${item.name}`}
+                                                        >
+                                                            <img
+                                                                src={asset(
+                                                                    item.image,
+                                                                )}
+                                                                alt={`${item.name} issued by ${item.issuer}`}
+                                                                loading="lazy"
+                                                                decoding="async"
+                                                                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                                                            />
+                                                            <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-focus-within:opacity-100 group-hover:opacity-100">
+                                                                Click to view
+                                                                certificate
+                                                            </span>
+                                                        </button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="max-h-[92vh] max-w-6xl overflow-auto border-white/10 bg-[#0b0e18] p-3 text-white sm:p-5">
+                                                        <DialogTitle className="pr-10 text-lg">
+                                                            {item.name}
+                                                        </DialogTitle>
+                                                        <DialogDescription className="text-slate-400">
+                                                            Issued by{' '}
+                                                            {item.issuer}
+                                                            {item.issued_at
+                                                                ? ` · ${formatDate(item.issued_at)}`
+                                                                : ''}
+                                                        </DialogDescription>
+                                                        <img
+                                                            src={asset(
+                                                                item.image,
+                                                            )}
+                                                            alt={`${item.name} issued by ${item.issuer}`}
+                                                            className="max-h-[72vh] w-full rounded-xl bg-white object-contain"
+                                                        />
+                                                    </DialogContent>
+                                                </Dialog>
+                                            ) : (
+                                                <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-violet-950/50 to-cyan-950/30">
+                                                    <Award
+                                                        className="text-violet-400"
+                                                        size={42}
+                                                        aria-hidden="true"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="p-6">
+                                                <h3 className="text-lg font-semibold text-white">
+                                                    {item.name}
+                                                </h3>
+                                                <p className="mt-2 text-sm text-slate-500">
+                                                    {item.issuer}
+                                                    {item.issued_at
+                                                        ? ` · ${formatDate(item.issued_at)}`
+                                                        : ''}
+                                                </p>
+                                                {item.credential_url && (
+                                                    <a
+                                                        href={
+                                                            item.credential_url
+                                                        }
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="mt-5 inline-flex items-center gap-2 rounded-full border border-violet-400/30 px-4 py-2 text-sm font-semibold text-violet-200 transition hover:border-violet-300 hover:bg-violet-400/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400"
+                                                    >
+                                                        Verify credential
+                                                        <ArrowUpRight
+                                                            size={15}
+                                                            aria-hidden="true"
+                                                        />
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </article>
                                     </Reveal>
                                 ))}
                             </div>
