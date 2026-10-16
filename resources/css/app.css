@@ -141,6 +141,10 @@
         @apply bg-background text-foreground;
     }
 
+    :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+        @apply outline-2 outline-offset-3 outline-violet-500;
+    }
+
     html {
         scroll-behavior: smooth;
     }
@@ -157,6 +161,11 @@
             transition-duration: 0.01ms !important;
         }
     }
+}
+
+.content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 800px;
 }
 
 @layer components {

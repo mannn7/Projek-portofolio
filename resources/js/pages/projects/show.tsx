@@ -78,6 +78,12 @@ export default function ProjectShow({
                     {JSON.stringify(seo.schema)}
                 </script>
             </Head>
+            <a
+                href="#main-content"
+                className="sr-only z-[100] rounded-lg bg-white px-4 py-3 font-semibold text-slate-950 focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
+            >
+                Skip to main content
+            </a>
             <header className="border-b border-white/10">
                 <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5">
                     <Link
@@ -92,7 +98,7 @@ export default function ProjectShow({
                     </span>
                 </div>
             </header>
-            <main>
+            <main id="main-content" tabIndex={-1}>
                 <section className="mx-auto max-w-6xl px-5 py-20">
                     <p className="font-mono text-xs tracking-[.25em] text-violet-400 uppercase">
                         {project.category || 'Case study'}
@@ -130,6 +136,8 @@ export default function ProjectShow({
                         <img
                             src={`/storage/${project.image}`}
                             alt={`Screenshot of ${project.title}`}
+                            fetchPriority="high"
+                            decoding="async"
                             className="mt-14 aspect-video w-full rounded-3xl border border-white/10 object-cover"
                         />
                     ) : (
@@ -210,6 +218,7 @@ export default function ProjectShow({
                                                 `${project.title} screenshot ${index + 1}`
                                             }
                                             loading="lazy"
+                                            decoding="async"
                                             className="aspect-video w-full object-cover transition duration-500 group-hover:scale-[1.02]"
                                         />
                                     </button>
@@ -263,6 +272,7 @@ export default function ProjectShow({
                                 selectedImage.alt_text ||
                                 `${project.title} screenshot`
                             }
+                            decoding="async"
                             className="max-h-[82vh] w-full rounded-xl object-contain"
                         />
                     )}

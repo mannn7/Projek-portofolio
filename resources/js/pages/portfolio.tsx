@@ -87,7 +87,7 @@ const defaults: Profile = {
     name: 'Firman Aji',
     headline: 'Full-Stack Developer',
     bio: 'I build dependable web products with Laravel, React, TypeScript, and thoughtful interface design.',
-    photo: '/images/firman-aji-profile-blue.png',
+    photo: '/images/firman-aji-profile-blue.webp',
     location: 'Indonesia',
     available_for_work: true,
 };
@@ -210,13 +210,16 @@ function Heading({
 function TechMark({
     technology,
     compact = false,
+    hiddenFromAssistiveTechnology = false,
 }: {
     technology: Technology;
     compact?: boolean;
+    hiddenFromAssistiveTechnology?: boolean;
 }) {
     const Icon = technology.icon;
     return (
         <span
+            aria-hidden={hiddenFromAssistiveTechnology || undefined}
             className={`group/tech inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b0f19]/80 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-white/20 ${compact ? 'px-4 py-3' : 'px-5 py-4'}`}
             style={{ boxShadow: `0 14px 45px rgba(${technology.glow}, .08)` }}
         >
@@ -279,7 +282,10 @@ export default function Portfolio({
     );
 
     return (
-        <div className="min-h-screen overflow-x-hidden bg-[#070910] text-slate-200 selection:bg-violet-500/40">
+        <div
+            id="top"
+            className="min-h-screen overflow-x-hidden bg-[#070910] text-slate-200 selection:bg-violet-500/40"
+        >
             <Head title={seo.title}>
                 <meta name="description" content={seo.description} />
                 <link rel="canonical" href={seo.canonical} />
@@ -297,6 +303,12 @@ export default function Portfolio({
                     {JSON.stringify(seo.schema)}
                 </script>
             </Head>
+            <a
+                href="#main-content"
+                className="sr-only z-[100] rounded-lg bg-white px-4 py-3 font-semibold text-slate-950 focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
+            >
+                Skip to main content
+            </a>
             <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[.07] bg-[#070910]/80 backdrop-blur-2xl">
                 <nav
                     aria-label="Primary navigation"
@@ -326,8 +338,10 @@ export default function Portfolio({
                         Start a conversation
                     </a>
                     <button
+                        type="button"
                         className="rounded-lg border border-white/10 p-2 lg:hidden"
                         aria-expanded={menu}
+                        aria-controls="mobile-navigation"
                         aria-label="Toggle navigation"
                         onClick={() => setMenu(!menu)}
                     >
@@ -337,6 +351,7 @@ export default function Portfolio({
                 <AnimatePresence>
                     {menu && (
                         <motion.div
+                            id="mobile-navigation"
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
@@ -357,11 +372,20 @@ export default function Portfolio({
                 </AnimatePresence>
             </header>
 
-            <main id="top">
+            <main id="main-content" tabIndex={-1}>
                 <section className="relative min-h-screen overflow-hidden pt-20">
-                    <div className="absolute top-16 left-[55%] h-[34rem] w-[34rem] rounded-full bg-violet-600/20 blur-[140px]" />
-                    <div className="absolute bottom-0 -left-32 h-80 w-80 rounded-full bg-cyan-600/10 blur-[120px]" />
-                    <div className="portfolio-grid absolute inset-0 opacity-30" />
+                    <div
+                        aria-hidden="true"
+                        className="absolute top-16 left-[55%] h-[34rem] w-[34rem] rounded-full bg-violet-600/20 blur-[140px]"
+                    />
+                    <div
+                        aria-hidden="true"
+                        className="absolute bottom-0 -left-32 h-80 w-80 rounded-full bg-cyan-600/10 blur-[120px]"
+                    />
+                    <div
+                        aria-hidden="true"
+                        className="portfolio-grid absolute inset-0 opacity-30"
+                    />
                     <div className="relative mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl items-center gap-14 px-5 py-20 lg:grid-cols-[1.1fr_.9fr] lg:px-8">
                         <div>
                             <Reveal>
@@ -461,6 +485,10 @@ export default function Portfolio({
                                         <img
                                             src={asset(profile.photo)}
                                             alt={`Portrait of ${profile.name}`}
+                                            width={1086}
+                                            height={1448}
+                                            fetchPriority="high"
+                                            decoding="async"
                                             className="h-full w-full object-cover"
                                         />
                                     ) : (
@@ -502,6 +530,9 @@ export default function Portfolio({
                                 key={`${technology.name}-${index}`}
                                 technology={technology}
                                 compact
+                                hiddenFromAssistiveTechnology={
+                                    index >= stack.length
+                                }
                             />
                         ))}
                     </div>
@@ -676,6 +707,7 @@ export default function Portfolio({
                                 {categories.map((item) => (
                                     <button
                                         key={item}
+                                        type="button"
                                         onClick={() => setCategory(item)}
                                         aria-pressed={category === item}
                                         className={`rounded-full px-4 py-2 text-sm transition ${category === item ? 'bg-violet-500 text-white' : 'border border-white/10 text-slate-400 hover:text-white'}`}
@@ -704,6 +736,7 @@ export default function Portfolio({
                                                         )}
                                                         alt={`Screenshot of ${project.title}`}
                                                         loading="lazy"
+                                                        decoding="async"
                                                         className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
                                                     />
                                                 ) : (
@@ -766,7 +799,7 @@ export default function Portfolio({
                 {certificates.length > 0 && (
                     <section
                         id="certificates"
-                        className="scroll-mt-24 px-5 py-28 lg:px-8"
+                        className="content-auto scroll-mt-24 px-5 py-28 lg:px-8"
                     >
                         <div className="mx-auto max-w-7xl">
                             <Heading

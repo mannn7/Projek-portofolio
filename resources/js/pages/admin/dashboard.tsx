@@ -610,7 +610,7 @@ export default function AdminDashboard(props: Props) {
                             {filteredRecords.map((item) => (
                                 <article
                                     key={item.id}
-                                    className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5"
+                                    className="flex flex-col items-stretch justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5 sm:flex-row sm:items-center"
                                 >
                                     <div className="flex min-w-0 items-center gap-4">
                                         {(item.image || item.photo) && (
@@ -635,7 +635,7 @@ export default function AdminDashboard(props: Props) {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap justify-end gap-2">
                                         {active === 'projects' && (
                                             <button
                                                 onClick={() =>

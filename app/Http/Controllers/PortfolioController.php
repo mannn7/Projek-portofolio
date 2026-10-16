@@ -34,7 +34,7 @@ class PortfolioController extends Controller
                 'title' => $title,
                 'description' => $description,
                 'canonical' => route('home'),
-                'image' => $this->publicMediaUrl($profile?->photo ?: 'images/firman-aji-profile-blue.png'),
+                'image' => $this->publicMediaUrl($profile?->photo ?: 'images/firman-aji-profile-blue.webp'),
                 'schema' => array_filter([
                     '@context' => 'https://schema.org',
                     '@type' => 'Person',
@@ -42,7 +42,7 @@ class PortfolioController extends Controller
                     'jobTitle' => $profile?->headline,
                     'description' => $description,
                     'url' => route('home'),
-                    'image' => $this->publicMediaUrl($profile?->photo ?: 'images/firman-aji-profile-blue.png'),
+                    'image' => $this->publicMediaUrl($profile?->photo ?: 'images/firman-aji-profile-blue.webp'),
                     'email' => $profile?->email ? "mailto:{$profile->email}" : null,
                     'sameAs' => array_values(array_filter([
                         $profile?->github_url,
@@ -75,7 +75,7 @@ class PortfolioController extends Controller
                 'title' => "{$project->title} — FA.DEV",
                 'description' => $description,
                 'canonical' => route('projects.show', $project),
-                'image' => $this->publicMediaUrl($project->image ?: $project->images->first()?->path ?: 'images/firman-aji-profile-blue.png'),
+                'image' => $this->publicMediaUrl($project->image ?: $project->images->first()?->path ?: 'images/firman-aji-profile-blue.webp'),
                 'publishedAt' => $project->published_at?->toAtomString(),
                 'schema' => array_filter([
                     '@context' => 'https://schema.org',
@@ -83,7 +83,7 @@ class PortfolioController extends Controller
                     'name' => $project->title,
                     'description' => $description,
                     'url' => route('projects.show', $project),
-                    'image' => $this->publicMediaUrl($project->image ?: $project->images->first()?->path ?: 'images/firman-aji-profile-blue.png'),
+                    'image' => $this->publicMediaUrl($project->image ?: $project->images->first()?->path ?: 'images/firman-aji-profile-blue.webp'),
                     'keywords' => $project->technologies,
                     'datePublished' => $project->published_at?->toAtomString(),
                 ], fn ($value) => $value !== null && $value !== ''),
