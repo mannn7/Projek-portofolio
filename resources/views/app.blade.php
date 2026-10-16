@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#070910" media="(prefers-color-scheme: dark)">
+        <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+        <meta name="robots" content="{{ request()->routeIs('home', 'projects.show') ? 'index, follow, max-image-preview:large' : 'noindex, nofollow' }}">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>

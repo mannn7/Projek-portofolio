@@ -11,6 +11,7 @@ export default defineConfig({
     plugins: lazyPlugins(() => [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
+            ssr: 'resources/js/app.tsx',
             refresh: true,
             fonts: [
                 bunny('Instrument Sans', {
@@ -18,7 +19,7 @@ export default defineConfig({
                 }),
             ],
         }),
-        inertia(),
+        inertia({ ssr: { entry: 'resources/js/app.tsx' } }),
         react(),
         babel({
             presets: [reactCompilerPreset()],

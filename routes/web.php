@@ -4,6 +4,7 @@
 use App\Http\Controllers\Admin\PortfolioDashboardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PortfolioController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsurePortfolioAdmin;
 use App\Http\Middleware\EnsureTeamMembership;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PortfolioController::class, 'index'])->name('home');
 Route::get('/projects/{project:slug}', [PortfolioController::class, 'project'])->name('projects.show');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 
 /*
 |--------------------------------------------------------------------------

@@ -30,6 +30,7 @@ import {
     SiTypescript,
 } from 'react-icons/si';
 import { useMemo, useState } from 'react';
+import type { SeoData } from '@/types/seo';
 
 type Profile = {
     name: string;
@@ -79,6 +80,7 @@ type Props = {
     skills: Skill[];
     experiences: Experience[];
     certificates: Certificate[];
+    seo: SeoData;
 };
 
 const defaults: Profile = {
@@ -238,6 +240,7 @@ export default function Portfolio({
     skills,
     experiences,
     certificates,
+    seo,
 }: Props) {
     const reduceMotion = useReducedMotion();
     const profile = {
@@ -277,19 +280,22 @@ export default function Portfolio({
 
     return (
         <div className="min-h-screen overflow-x-hidden bg-[#070910] text-slate-200 selection:bg-violet-500/40">
-            <Head title={`${profile.name} — ${profile.headline}`}>
-                <meta
-                    name="description"
-                    content={
-                        profile.bio?.slice(0, 155) ||
-                        `${profile.name}, Full-Stack Developer portfolio.`
-                    }
-                />
-                <meta
-                    property="og:title"
-                    content={`${profile.name} — ${profile.headline}`}
-                />
-                <meta property="og:description" content={profile.bio || ''} />
+            <Head title={seo.title}>
+                <meta name="description" content={seo.description} />
+                <link rel="canonical" href={seo.canonical} />
+                <meta property="og:type" content="profile" />
+                <meta property="og:title" content={seo.title} />
+                <meta property="og:description" content={seo.description} />
+                <meta property="og:url" content={seo.canonical} />
+                <meta property="og:site_name" content="FA.DEV" />
+                {seo.image && <meta property="og:image" content={seo.image} />}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={seo.title} />
+                <meta name="twitter:description" content={seo.description} />
+                {seo.image && <meta name="twitter:image" content={seo.image} />}
+                <script type="application/ld+json">
+                    {JSON.stringify(seo.schema)}
+                </script>
             </Head>
             <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[.07] bg-[#070910]/80 backdrop-blur-2xl">
                 <nav

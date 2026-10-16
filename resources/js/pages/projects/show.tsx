@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import type { SeoData } from '@/types/seo';
 
 type ProjectImage = { id: number; path: string; alt_text?: string };
 
@@ -36,9 +37,11 @@ type Project = {
 export default function ProjectShow({
     project,
     relatedProjects,
+    seo,
 }: {
     project: Project;
     relatedProjects: Project[];
+    seo: SeoData;
 }) {
     const [selectedImage, setSelectedImage] = useState<ProjectImage | null>(
         null,
@@ -52,11 +55,28 @@ export default function ProjectShow({
 
     return (
         <div className="min-h-screen bg-[#070910] text-slate-200">
-            <Head title={`${project.title} — FA.DEV`}>
-                <meta
-                    name="description"
-                    content={project.description || project.title}
-                />
+            <Head title={seo.title}>
+                <meta name="description" content={seo.description} />
+                <link rel="canonical" href={seo.canonical} />
+                <meta property="og:type" content="article" />
+                <meta property="og:title" content={seo.title} />
+                <meta property="og:description" content={seo.description} />
+                <meta property="og:url" content={seo.canonical} />
+                <meta property="og:site_name" content="FA.DEV" />
+                {seo.image && <meta property="og:image" content={seo.image} />}
+                {seo.publishedAt && (
+                    <meta
+                        property="article:published_time"
+                        content={seo.publishedAt}
+                    />
+                )}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={seo.title} />
+                <meta name="twitter:description" content={seo.description} />
+                {seo.image && <meta name="twitter:image" content={seo.image} />}
+                <script type="application/ld+json">
+                    {JSON.stringify(seo.schema)}
+                </script>
             </Head>
             <header className="border-b border-white/10">
                 <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5">

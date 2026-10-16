@@ -40,6 +40,32 @@ class PortfolioTest extends TestCase
         $this->get(route('projects.show', $draft))->assertNotFound();
     }
 
+    public function test_sitemap_only_contains_public_portfolio_pages(): void
+    {
+        $published = Project::query()->create([
+            'title' => 'Public work', 'slug' => 'public-work', 'is_published' => true,
+        ]);
+        $draft = Project::query()->create([
+            'title' => 'Private draft', 'slug' => 'private-draft', 'is_published' => false,
+        ]);
+
+        $this->get(route('sitemap'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
+            ->assertSee(route('home'), escape: false)
+            ->assertSee(route('projects.show', $published), escape: false)
+            ->assertDontSee(route('projects.show', $draft), escape: false);
+    }
+
+    public function test_robots_file_points_to_sitemap_and_blocks_private_areas(): void
+    {
+        $this->get(route('robots'))
+            ->assertOk()
+            ->assertSee('Sitemap: '.route('sitemap'), escape: false)
+            ->assertSee('Disallow: /admin', escape: false)
+            ->assertSee('Disallow: /settings', escape: false);
+    }
+
     public function test_admin_dashboard_requires_the_configured_admin(): void
     {
         $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);

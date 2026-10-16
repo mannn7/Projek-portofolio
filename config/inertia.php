@@ -16,9 +16,14 @@ return [
     */
 
     'ssr' => [
-        'enabled' => true,
-        'url' => 'http://127.0.0.1:13714',
-        // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', true),
+        'runtime' => env('INERTIA_SSR_RUNTIME', 'node'),
+        'ensure_runtime_exists' => (bool) env('INERTIA_SSR_ENSURE_RUNTIME_EXISTS', false),
+        'url' => env('INERTIA_SSR_URL', 'http://127.0.0.1:13714'),
+        'hot_url' => env('INERTIA_SSR_HOT_URL'),
+        'timeout' => env('INERTIA_SSR_TIMEOUT'),
+        'ensure_bundle_exists' => (bool) env('INERTIA_SSR_ENSURE_BUNDLE_EXISTS', true),
+        'bundle' => base_path('bootstrap/ssr/app.js'),
 
     ],
 
