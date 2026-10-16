@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ContactMessage;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -172,5 +173,50 @@ class PortfolioTest extends TestCase
             'name' => 'Verified Certificate',
             'is_active' => true,
         ]);
+    }
+
+    public function test_public_contact_form_stores_a_valid_message(): void
+    {
+        $this->post(route('contact.store'), [
+            'name' => 'Portfolio Visitor',
+            'email' => 'visitor@example.com',
+            'subject' => 'Project enquiry',
+            'message' => 'I would like to discuss a new web project.',
+            'website' => '',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('contact_messages', [
+            'email' => 'visitor@example.com',
+            'subject' => 'Project enquiry',
+        ]);
+    }
+
+    public function test_contact_form_rejects_spam_honeypot_and_short_messages(): void
+    {
+        $this->post(route('contact.store'), [
+            'name' => 'Spam Bot',
+            'email' => 'bot@example.com',
+            'message' => 'short',
+            'website' => 'https://spam.example.com',
+        ])->assertSessionHasErrors(['message', 'website']);
+
+        $this->assertDatabaseCount('contact_messages', 0);
+    }
+
+    public function test_admin_can_manage_contact_message_status(): void
+    {
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $message = ContactMessage::query()->create([
+            'name' => 'Portfolio Visitor',
+            'email' => 'visitor@example.com',
+            'message' => 'A valid message for the portfolio owner.',
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.messages.read', $message))
+            ->assertRedirect();
+
+        $this->assertNotNull($message->fresh()->read_at);
     }
 }

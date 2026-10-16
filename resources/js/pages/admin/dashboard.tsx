@@ -5,6 +5,8 @@ import {
     FileBadge,
     FolderKanban,
     LogOut,
+    MailCheck,
+    MailOpen,
     Plus,
     Save,
     Search,
@@ -33,6 +35,7 @@ type Props = {
     skills: RecordData[];
     experiences: RecordData[];
     certificates: RecordData[];
+    contactMessages: RecordData[];
 };
 
 const sections = [
@@ -41,6 +44,7 @@ const sections = [
     ['skills', 'Skills', Sparkles],
     ['experiences', 'Experience', Briefcase],
     ['certificates', 'Certificates', FileBadge],
+    ['messages', 'Messages', MailOpen],
 ] as const;
 
 const emptyData: Record<string, RecordData> = {
@@ -425,11 +429,13 @@ export default function AdminDashboard(props: Props) {
     const [deleting, setDeleting] = useState<RecordData | null>(null);
     const records = useMemo(
         () =>
-            active === 'profile'
-                ? props.profile
-                    ? [props.profile]
-                    : []
-                : ((props[active as keyof Props] as RecordData[]) ?? []),
+            active === 'messages'
+                ? props.contactMessages
+                : active === 'profile'
+                  ? props.profile
+                      ? [props.profile]
+                      : []
+                  : ((props[active as keyof Props] as RecordData[]) ?? []),
         [active, props],
     );
     const filteredRecords = useMemo(
@@ -442,6 +448,9 @@ export default function AdminDashboard(props: Props) {
                     item.company,
                     item.category,
                     item.issuer,
+                    item.email,
+                    item.subject,
+                    item.message,
                 ]
                     .filter(Boolean)
                     .join(' ')
@@ -459,10 +468,14 @@ export default function AdminDashboard(props: Props) {
         [active, projectStatus, query, records],
     );
     const titleFor = (item: RecordData) =>
-        item.title || item.name || item.role || 'Item';
+        item.title || item.subject || item.name || item.role || 'Message';
     const remove = () => {
         if (!deleting) return;
-        router.delete(`/admin/content/${active}/${deleting.id}`, {
+        const url =
+            active === 'messages'
+                ? `/admin/messages/${deleting.id}`
+                : `/admin/content/${active}/${deleting.id}`;
+        router.delete(url, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('Content deleted.');
@@ -482,6 +495,15 @@ export default function AdminDashboard(props: Props) {
                             ? 'Project moved to draft.'
                             : 'Project published.',
                     ),
+            },
+        );
+    const toggleMessageRead = (item: RecordData) =>
+        router.patch(
+            `/admin/messages/${item.id}/read`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => toast.success('Message status updated.'),
             },
         );
 
@@ -552,17 +574,19 @@ export default function AdminDashboard(props: Props) {
                                 {sections.find(([key]) => key === active)?.[1]}
                             </h1>
                         </div>
-                        {active !== 'profile' && !editing && (
-                            <button
-                                onClick={() =>
-                                    setEditing({ ...emptyData[active] })
-                                }
-                                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950"
-                            >
-                                <Plus size={17} />
-                                Add new
-                            </button>
-                        )}
+                        {active !== 'profile' &&
+                            active !== 'messages' &&
+                            !editing && (
+                                <button
+                                    onClick={() =>
+                                        setEditing({ ...emptyData[active] })
+                                    }
+                                    className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950"
+                                >
+                                    <Plus size={17} />
+                                    Add new
+                                </button>
+                            )}
                     </div>
                     {(editing ||
                         (active === 'profile' && records.length === 0)) && (
@@ -630,9 +654,15 @@ export default function AdminDashboard(props: Props) {
                                                 {item.category ||
                                                     item.company ||
                                                     item.issuer ||
+                                                    item.email ||
                                                     item.headline ||
                                                     'Portfolio content'}
                                             </p>
+                                            {active === 'messages' && (
+                                                <p className="mt-3 max-w-2xl text-sm leading-6 whitespace-pre-line text-slate-300">
+                                                    {item.message}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap justify-end gap-2">
@@ -660,12 +690,28 @@ export default function AdminDashboard(props: Props) {
                                                 </span>
                                             </button>
                                         )}
-                                        <button
-                                            onClick={() => setEditing(item)}
-                                            className="admin-ghost"
-                                        >
-                                            Edit
-                                        </button>
+                                        {active === 'messages' && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    toggleMessageRead(item)
+                                                }
+                                                className={`admin-ghost ${item.read_at ? 'text-slate-400' : 'text-emerald-300'}`}
+                                            >
+                                                <MailCheck size={16} />
+                                                {item.read_at
+                                                    ? 'Mark unread'
+                                                    : 'Mark read'}
+                                            </button>
+                                        )}
+                                        {active !== 'messages' && (
+                                            <button
+                                                onClick={() => setEditing(item)}
+                                                className="admin-ghost"
+                                            >
+                                                Edit
+                                            </button>
+                                        )}
                                         {active !== 'profile' && (
                                             <button
                                                 onClick={() =>

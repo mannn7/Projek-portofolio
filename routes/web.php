@@ -2,6 +2,7 @@
 <?php
 
 use App\Http\Controllers\Admin\PortfolioDashboardController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\SeoController;
@@ -21,6 +22,9 @@ Route::get('/', [PortfolioController::class, 'index'])->name('home');
 Route::get('/projects/{project:slug}', [PortfolioController::class, 'project'])->name('projects.show');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::post('/contact', [ContactController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('contact.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -56,6 +60,10 @@ Route::prefix('admin')
             ->name('projects.toggle');
         Route::delete('/project-images/{projectImage}', [PortfolioDashboardController::class, 'destroyProjectImage'])
             ->name('project-images.destroy');
+        Route::patch('/messages/{contactMessage}/read', [PortfolioDashboardController::class, 'markMessageRead'])
+            ->name('messages.read');
+        Route::delete('/messages/{contactMessage}', [PortfolioDashboardController::class, 'destroyMessage'])
+            ->name('messages.destroy');
     });
 
 /*

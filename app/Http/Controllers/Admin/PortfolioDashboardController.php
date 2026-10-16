@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Certificate;
+use App\Models\ContactMessage;
 use App\Models\Experience;
 use App\Models\Profile;
 use App\Models\Project;
@@ -30,12 +31,14 @@ class PortfolioDashboardController extends Controller
                 'profiles' => Profile::count(),
                 'experiences' => Experience::count(),
                 'certificates' => Certificate::count(),
+                'messages' => ContactMessage::count(),
             ],
             'profile' => Profile::query()->first(),
             'projects' => Project::query()->with('images')->orderBy('sort_order')->latest()->get(),
             'skills' => Skill::query()->orderBy('sort_order')->get(),
             'experiences' => Experience::query()->orderByDesc('started_at')->get(),
             'certificates' => Certificate::query()->orderBy('sort_order')->get(),
+            'contactMessages' => ContactMessage::query()->latest()->get(),
         ]);
     }
 
@@ -107,6 +110,22 @@ class PortfolioDashboardController extends Controller
         $projectImage->delete();
 
         return back()->with('success', 'Project screenshot deleted.');
+    }
+
+    public function markMessageRead(ContactMessage $contactMessage): RedirectResponse
+    {
+        $contactMessage->update([
+            'read_at' => $contactMessage->read_at ? null : now(),
+        ]);
+
+        return back()->with('success', 'Message status updated.');
+    }
+
+    public function destroyMessage(ContactMessage $contactMessage): RedirectResponse
+    {
+        $contactMessage->delete();
+
+        return back()->with('success', 'Message deleted.');
     }
 
     /** @return class-string<Model> */

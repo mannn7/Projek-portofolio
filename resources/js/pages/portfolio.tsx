@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
     ArrowDownRight,
@@ -29,6 +29,7 @@ import {
     SiTailwindcss,
     SiTypescript,
 } from 'react-icons/si';
+import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import type { SeoData } from '@/types/seo';
 
@@ -280,6 +281,20 @@ export default function Portfolio({
             }, {}),
         [skills],
     );
+    const contactForm = useForm({
+        name: '',
+        email: '',
+        subject: '',
+        message: '',
+        website: '',
+    });
+    const submitContact = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        contactForm.post('/contact', {
+            preserveScroll: true,
+            onSuccess: () => contactForm.reset(),
+        });
+    };
 
     return (
         <div
@@ -880,50 +895,183 @@ export default function Portfolio({
                     id="contact"
                     className="scroll-mt-24 px-5 pt-24 pb-12 lg:px-8"
                 >
-                    <Reveal className="mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] border border-violet-400/20 bg-gradient-to-br from-violet-950/80 via-[#121529] to-cyan-950/40 px-7 py-16 text-center md:px-16 md:py-24">
-                        <p className="font-mono text-xs tracking-[.25em] text-violet-300 uppercase">
-                            Let’s make something useful
-                        </p>
-                        <h2 className="mx-auto mt-5 max-w-4xl text-4xl font-black tracking-[-.04em] text-white md:text-7xl">
-                            Have a problem worth solving?
-                        </h2>
-                        <p className="mx-auto mt-6 max-w-xl leading-7 text-slate-300">
-                            Tell me what you’re building, what’s getting in the
-                            way, and where you want to go next.
-                        </p>
-                        {profile.email && (
-                            <a
-                                href={`mailto:${profile.email}`}
-                                className="mt-9 inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 font-bold text-slate-950"
-                            >
-                                <Mail size={18} />
-                                Email {profile.name.split(' ')[0]}
-                            </a>
-                        )}
-                        <div className="mt-10 flex justify-center gap-3">
-                            {profile.github_url && (
+                    <Reveal className="mx-auto grid max-w-7xl overflow-hidden rounded-[2.5rem] border border-violet-400/20 bg-gradient-to-br from-violet-950/80 via-[#121529] to-cyan-950/40 lg:grid-cols-[.85fr_1.15fr]">
+                        <div className="p-8 sm:p-12 lg:p-16">
+                            <p className="font-mono text-xs tracking-[.25em] text-violet-300 uppercase">
+                                Let’s make something useful
+                            </p>
+                            <h2 className="mt-5 text-4xl font-black tracking-[-.04em] text-white md:text-6xl">
+                                Have a problem worth solving?
+                            </h2>
+                            <p className="mt-6 max-w-xl leading-7 text-slate-300">
+                                Tell me what you’re building, what’s getting in
+                                the way, and where you want to go next.
+                            </p>
+                            {profile.email && (
                                 <a
-                                    href={profile.github_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    aria-label="GitHub"
-                                    className="rounded-full border border-white/15 p-3"
+                                    href={`mailto:${profile.email}`}
+                                    className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-violet-200 transition hover:text-white"
                                 >
-                                    <Github />
+                                    <Mail size={18} />
+                                    {profile.email}
                                 </a>
                             )}
-                            {profile.linkedin_url && (
-                                <a
-                                    href={profile.linkedin_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    aria-label="LinkedIn"
-                                    className="rounded-full border border-white/15 p-3"
-                                >
-                                    <Linkedin />
-                                </a>
-                            )}
+                            <div className="mt-8 flex gap-3">
+                                {profile.github_url && (
+                                    <a
+                                        href={profile.github_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        aria-label="GitHub"
+                                        className="rounded-full border border-white/15 p-3"
+                                    >
+                                        <Github />
+                                    </a>
+                                )}
+                                {profile.linkedin_url && (
+                                    <a
+                                        href={profile.linkedin_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        aria-label="LinkedIn"
+                                        className="rounded-full border border-white/15 p-3"
+                                    >
+                                        <Linkedin />
+                                    </a>
+                                )}
+                            </div>
                         </div>
+                        <form
+                            onSubmit={submitContact}
+                            className="border-t border-white/10 bg-black/20 p-8 text-left sm:p-12 lg:border-t-0 lg:border-l lg:p-16"
+                        >
+                            <div className="grid gap-5 sm:grid-cols-2">
+                                <label className="grid gap-2 text-sm font-medium text-slate-300">
+                                    Name
+                                    <input
+                                        name="name"
+                                        value={contactForm.data.name}
+                                        onChange={(event) =>
+                                            contactForm.setData(
+                                                'name',
+                                                event.target.value,
+                                            )
+                                        }
+                                        autoComplete="name"
+                                        required
+                                        className="rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-white outline-none placeholder:text-slate-600 focus:border-violet-400"
+                                        placeholder="Your name"
+                                    />
+                                    {contactForm.errors.name && (
+                                        <span className="text-xs text-rose-300">
+                                            {contactForm.errors.name}
+                                        </span>
+                                    )}
+                                </label>
+                                <label className="grid gap-2 text-sm font-medium text-slate-300">
+                                    Email
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={contactForm.data.email}
+                                        onChange={(event) =>
+                                            contactForm.setData(
+                                                'email',
+                                                event.target.value,
+                                            )
+                                        }
+                                        autoComplete="email"
+                                        required
+                                        className="rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-white outline-none placeholder:text-slate-600 focus:border-violet-400"
+                                        placeholder="you@example.com"
+                                    />
+                                    {contactForm.errors.email && (
+                                        <span className="text-xs text-rose-300">
+                                            {contactForm.errors.email}
+                                        </span>
+                                    )}
+                                </label>
+                            </div>
+                            <label className="mt-5 grid gap-2 text-sm font-medium text-slate-300">
+                                Subject{' '}
+                                <span className="sr-only">optional</span>
+                                <input
+                                    name="subject"
+                                    value={contactForm.data.subject}
+                                    onChange={(event) =>
+                                        contactForm.setData(
+                                            'subject',
+                                            event.target.value,
+                                        )
+                                    }
+                                    className="rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-white outline-none placeholder:text-slate-600 focus:border-violet-400"
+                                    placeholder="Project or collaboration"
+                                />
+                            </label>
+                            <label className="mt-5 grid gap-2 text-sm font-medium text-slate-300">
+                                Message
+                                <textarea
+                                    name="message"
+                                    value={contactForm.data.message}
+                                    onChange={(event) =>
+                                        contactForm.setData(
+                                            'message',
+                                            event.target.value,
+                                        )
+                                    }
+                                    required
+                                    minLength={10}
+                                    rows={5}
+                                    className="resize-y rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-white outline-none placeholder:text-slate-600 focus:border-violet-400"
+                                    placeholder="Tell me a little about your idea…"
+                                />
+                                {contactForm.errors.message && (
+                                    <span className="text-xs text-rose-300">
+                                        {contactForm.errors.message}
+                                    </span>
+                                )}
+                            </label>
+                            <div
+                                className="absolute -left-[9999px]"
+                                aria-hidden="true"
+                            >
+                                <label>
+                                    Website
+                                    <input
+                                        name="website"
+                                        value={contactForm.data.website}
+                                        onChange={(event) =>
+                                            contactForm.setData(
+                                                'website',
+                                                event.target.value,
+                                            )
+                                        }
+                                        tabIndex={-1}
+                                        autoComplete="off"
+                                    />
+                                </label>
+                            </div>
+                            <div className="mt-6 flex flex-wrap items-center gap-4">
+                                <button
+                                    type="submit"
+                                    disabled={contactForm.processing}
+                                    className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 font-bold text-slate-950 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <Mail size={18} />
+                                    {contactForm.processing
+                                        ? 'Sending…'
+                                        : 'Send message'}
+                                </button>
+                                {contactForm.recentlySuccessful && (
+                                    <p
+                                        role="status"
+                                        className="text-sm font-medium text-emerald-300"
+                                    >
+                                        Message received. Thank you!
+                                    </p>
+                                )}
+                            </div>
+                        </form>
                     </Reveal>
                 </section>
             </main>
