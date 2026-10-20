@@ -209,8 +209,20 @@ function PortfolioIntro({ onComplete }: { onComplete: () => void }) {
             aria-modal="true"
             aria-label="FA.DEV portfolio introduction"
             className="fixed inset-0 z-[100] grid place-items-center overflow-hidden bg-[radial-gradient(circle_at_50%_38%,#312e81_0%,#172554_28%,#071426_62%,#030712_100%)] text-white"
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ clipPath: 'circle(150% at 50% 38%)' }}
+            animate={{
+                clipPath: [
+                    'circle(150% at 50% 38%)',
+                    'circle(150% at 50% 38%)',
+                    'circle(0% at 50% 38%)',
+                ],
+            }}
+            exit={{ opacity: 0, transition: { duration: 0.25 } }}
+            transition={{
+                duration: 4.3,
+                times: [0, 0.82, 1],
+                ease: [0.65, 0, 0.35, 1],
+            }}
         >
             <div
                 className="absolute inset-0 opacity-70"
@@ -290,7 +302,19 @@ function PortfolioIntro({ onComplete }: { onComplete: () => void }) {
                 transition={{ duration: 2.2 }}
             />
 
-            <div className="relative z-10 w-full max-w-2xl px-7 text-center">
+            <motion.div
+                className="relative z-10 w-full max-w-2xl px-7 text-center"
+                animate={{
+                    scale: [1, 1, 1.16],
+                    opacity: [1, 1, 0],
+                    filter: ['blur(0px)', 'blur(0px)', 'blur(10px)'],
+                }}
+                transition={{
+                    duration: 4.3,
+                    times: [0, 0.82, 1],
+                    ease: [0.65, 0, 0.35, 1],
+                }}
+            >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.55, rotate: -12 }}
                     animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -429,7 +453,21 @@ function PortfolioIntro({ onComplete }: { onComplete: () => void }) {
                         />
                     </div>
                 </div>
-            </div>
+            </motion.div>
+
+            <motion.div
+                aria-hidden="true"
+                className="pointer-events-none absolute top-[38%] left-1/2 z-20 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cyan-100 shadow-[0_0_45px_18px_rgba(103,232,249,.5)]"
+                animate={{
+                    scale: [1, 1, 14],
+                    opacity: [0, 0, 0.9, 0],
+                }}
+                transition={{
+                    duration: 4.3,
+                    times: [0, 0.78, 0.86, 1],
+                    ease: [0.16, 1, 0.3, 1],
+                }}
+            />
 
             <button
                 type="button"
@@ -438,21 +476,6 @@ function PortfolioIntro({ onComplete }: { onComplete: () => void }) {
             >
                 Skip intro
             </button>
-
-            <motion.div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 left-0 z-30 w-1/2 bg-[#070910]"
-                initial={{ x: '-100%' }}
-                animate={{ x: ['-100%', '-100%', '0%', '-100%'] }}
-                transition={{ times: [0, 0.87, 0.88, 1], duration: 4.3 }}
-            />
-            <motion.div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 right-0 z-30 w-1/2 bg-[#070910]"
-                initial={{ x: '100%' }}
-                animate={{ x: ['100%', '100%', '0%', '100%'] }}
-                transition={{ times: [0, 0.87, 0.88, 1], duration: 4.3 }}
-            />
         </motion.div>
     );
 }
