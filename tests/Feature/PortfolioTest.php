@@ -311,6 +311,29 @@ class PortfolioTest extends TestCase
         Storage::disk('public')->assertExists('certificates/second.pdf');
     }
 
+    public function test_admin_cannot_delete_the_last_certificate_file(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('certificates/only.pdf', 'only');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $certificate = Certificate::query()->create([
+            'name' => 'Single-file Certificate',
+            'issuer' => 'Example Issuer',
+            'image' => 'certificates/only.pdf',
+            'files' => ['certificates/only.pdf'],
+            'is_active' => true,
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.certificates.files.destroy', [$certificate, 0]))
+            ->assertSessionHasErrors('files');
+
+        $certificate->refresh();
+        $this->assertSame('certificates/only.pdf', $certificate->image);
+        Storage::disk('public')->assertExists('certificates/only.pdf');
+    }
+
     public function test_public_contact_form_stores_a_valid_message(): void
     {
         $this->post(route('contact.store'), [

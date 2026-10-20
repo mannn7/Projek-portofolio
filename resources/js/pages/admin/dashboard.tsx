@@ -29,6 +29,9 @@ import {
 import { PdfThumbnail } from '@/components/pdf-thumbnail';
 
 type RecordData = Record<string, any> & { id?: number };
+
+const primaryMediaFor = (item: RecordData): string | undefined =>
+    item.image || item.photo || item.files?.[0] || undefined;
 type Props = {
     statistics: Record<string, number>;
     profile: RecordData | null;
@@ -428,27 +431,30 @@ function Editor({
                                                     />
                                                 )}
                                             </a>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    router.delete(
-                                                        `/admin/certificates/${initial.id}/files/${index}`,
-                                                        {
-                                                            preserveScroll: true,
-                                                            onSuccess: () => {
-                                                                toast.success(
-                                                                    'Certificate file deleted.',
-                                                                );
-                                                                onDone();
+                                            {certificateFiles.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        router.delete(
+                                                            `/admin/certificates/${initial.id}/files/${index}`,
+                                                            {
+                                                                preserveScroll: true,
+                                                                onSuccess:
+                                                                    () => {
+                                                                        toast.success(
+                                                                            'Certificate file deleted.',
+                                                                        );
+                                                                        onDone();
+                                                                    },
                                                             },
-                                                        },
-                                                    )
-                                                }
-                                                className="absolute top-2 right-2 rounded-lg bg-black/80 p-2 text-rose-300 opacity-100 shadow-lg transition hover:bg-rose-500 hover:text-white focus:opacity-100 sm:opacity-0 sm:group-hover/file:opacity-100"
-                                                aria-label={`Delete certificate file ${index + 1}`}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                                        )
+                                                    }
+                                                    className="absolute top-2 right-2 rounded-lg bg-black/80 p-2 text-rose-300 opacity-100 shadow-lg transition hover:bg-rose-500 hover:text-white focus:opacity-100 sm:opacity-0 sm:group-hover/file:opacity-100"
+                                                    aria-label={`Delete certificate file ${index + 1}`}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                     {galleryPreviews.map((preview, index) => (
@@ -799,22 +805,29 @@ export default function AdminDashboard(props: Props) {
                                     className="flex flex-col items-stretch justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5 sm:flex-row sm:items-center"
                                 >
                                     <div className="flex min-w-0 items-center gap-4">
-                                        {(item.image || item.photo) &&
-                                        isPdfPath(item.image || item.photo) ? (
+                                        {primaryMediaFor(item) &&
+                                        isPdfPath(primaryMediaFor(item)) ? (
                                             <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl border border-violet-400/20 bg-violet-500/10 text-violet-300">
                                                 <FileBadge size={23} />
                                                 <span className="mt-0.5 text-[9px] font-bold tracking-wider">
                                                     PDF
                                                 </span>
                                             </div>
-                                        ) : item.image || item.photo ? (
+                                        ) : primaryMediaFor(item) ? (
                                             <img
                                                 src={mediaUrl(
-                                                    item.image || item.photo,
+                                                    primaryMediaFor(item),
                                                 )}
                                                 alt=""
                                                 className="size-14 shrink-0 rounded-xl object-cover"
                                             />
+                                        ) : item.name && item.issuer ? (
+                                            <div
+                                                className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-amber-400/20 bg-amber-500/10 text-amber-300"
+                                                title="No certificate file uploaded"
+                                            >
+                                                <FileBadge size={23} />
+                                            </div>
                                         ) : null}
                                         <div className="min-w-0">
                                             <h2 className="font-semibold text-white">

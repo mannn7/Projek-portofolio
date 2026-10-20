@@ -124,6 +124,12 @@ class PortfolioDashboardController extends Controller
         ])));
         abort_unless(array_key_exists($index, $files), 404);
 
+        if (count($files) === 1) {
+            return back()->withErrors([
+                'files' => 'A certificate must keep at least one file. Upload a replacement before deleting this file.',
+            ]);
+        }
+
         $removedFile = $files[$index];
         array_splice($files, $index, 1);
         $certificate->update([
