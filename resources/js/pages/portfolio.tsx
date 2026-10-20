@@ -105,6 +105,8 @@ const defaults: Profile = {
     location: 'Indonesia',
     available_for_work: true,
 };
+
+const isPdfPath = (path?: string) => Boolean(path && /\.pdf$/i.test(path));
 type Technology = {
     name: string;
     icon: IconType;
@@ -1456,7 +1458,8 @@ export default function Portfolio({
                                 {certificates.map((item) => (
                                     <Reveal key={item.id}>
                                         <article className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[.03] transition hover:-translate-y-1 hover:border-violet-400/30">
-                                            {item.image ? (
+                                            {item.image &&
+                                            !isPdfPath(item.image) ? (
                                                 <Dialog>
                                                     <DialogTrigger asChild>
                                                         <button
@@ -1499,6 +1502,25 @@ export default function Portfolio({
                                                         />
                                                     </DialogContent>
                                                 </Dialog>
+                                            ) : item.image ? (
+                                                <a
+                                                    href={asset(item.image)}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-violet-950/60 to-cyan-950/30 transition hover:from-violet-900/60 hover:to-cyan-900/40 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
+                                                    aria-label={`Open certificate PDF ${item.name}`}
+                                                >
+                                                    <span className="text-center">
+                                                        <Award
+                                                            className="mx-auto text-violet-300"
+                                                            size={48}
+                                                            aria-hidden="true"
+                                                        />
+                                                        <span className="mt-4 block text-sm font-semibold text-violet-100">
+                                                            View certificate PDF
+                                                        </span>
+                                                    </span>
+                                                </a>
                                             ) : (
                                                 <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-violet-950/50 to-cyan-950/30">
                                                     <Award

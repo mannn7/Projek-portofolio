@@ -233,6 +233,27 @@ class PortfolioTest extends TestCase
         Storage::disk('public')->assertExists('certificates/existing.jpg');
     }
 
+    public function test_admin_can_upload_a_pdf_certificate(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.store', 'certificates'), [
+                'name' => 'PDF Certificate',
+                'issuer' => 'Example Issuer',
+                'image' => UploadedFile::fake()->create('certificate.pdf', 512, 'application/pdf'),
+                'sort_order' => 0,
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $certificate = Certificate::query()->where('name', 'PDF Certificate')->firstOrFail();
+        $this->assertStringEndsWith('.pdf', $certificate->image);
+        Storage::disk('public')->assertExists($certificate->image);
+    }
+
     public function test_public_contact_form_stores_a_valid_message(): void
     {
         $this->post(route('contact.store'), [

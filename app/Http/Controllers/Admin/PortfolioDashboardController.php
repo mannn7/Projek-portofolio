@@ -192,11 +192,17 @@ class PortfolioDashboardController extends Controller
             'certificates' => [
                 'name' => ['required', 'string', 'max:160'], 'issuer' => ['required', 'string', 'max:160'],
                 'issued_at' => ['nullable', 'date'], 'credential_url' => ['nullable', 'url', 'max:255'],
-                'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'dimensions:min_width=600,min_height=400', 'max:4096'],
+                'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:8192'],
                 'sort_order' => ['integer', 'min:0', 'max:9999'], 'is_active' => ['boolean'],
             ],
             default => abort(404),
         };
+
+        if ($resource === 'certificates'
+            && $request->hasFile('image')
+            && $request->file('image')->getMimeType() !== 'application/pdf') {
+            $rules['image'][] = 'dimensions:min_width=600,min_height=400';
+        }
 
         // Existing media URLs can be present in older CMS form payloads. They
         // mean "keep the current file" and must not be validated as uploads.

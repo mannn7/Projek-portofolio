@@ -156,13 +156,15 @@ const fields: Record<string, Array<[string, string, string]>> = {
         ['issuer', 'Issuer', 'text'],
         ['issued_at', 'Issue date', 'date'],
         ['credential_url', 'Credential URL', 'url'],
-        ['image', 'Certificate image', 'file'],
+        ['image', 'Certificate file (image or PDF)', 'file'],
         ['sort_order', 'Sort order', 'number'],
     ],
 };
 
 const mediaUrl = (path?: string) =>
     path ? (path.startsWith('/') ? path : `/storage/${path}`) : undefined;
+
+const isPdfPath = (path?: string) => Boolean(path && /\.pdf$/i.test(path));
 
 function Editor({
     resource,
@@ -260,6 +262,14 @@ function Editor({
                     ) : type === 'file' || type === 'multifile' ? (
                         <div className="rounded-2xl border border-dashed border-white/15 bg-black/20 p-4">
                             {name !== 'cv_file' &&
+                                !(
+                                    resource === 'certificates' &&
+                                    ((data[name] instanceof File &&
+                                        data[name].type ===
+                                            'application/pdf') ||
+                                        (!previews[name] &&
+                                            isPdfPath(initial[name])))
+                                ) &&
                                 (previews[name] || mediaUrl(initial[name])) && (
                                     <img
                                         src={
@@ -269,6 +279,24 @@ function Editor({
                                         alt={`${label} preview`}
                                         className="mb-4 aspect-video w-full rounded-xl object-cover"
                                     />
+                                )}
+                            {resource === 'certificates' &&
+                                name === 'image' &&
+                                ((data[name] instanceof File &&
+                                    data[name].type === 'application/pdf') ||
+                                    (!previews[name] &&
+                                        isPdfPath(initial[name]))) && (
+                                    <a
+                                        href={
+                                            previews[name] ||
+                                            mediaUrl(initial[name])
+                                        }
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="mb-4 flex aspect-video items-center justify-center rounded-xl border border-violet-400/20 bg-violet-500/10 text-sm font-semibold text-violet-200 transition hover:bg-violet-500/15"
+                                    >
+                                        Open certificate PDF
+                                    </a>
                                 )}
                             {name === 'cv_file' && initial.cv_file && (
                                 <a
@@ -345,7 +373,10 @@ function Editor({
                                 accept={
                                     name === 'cv_file'
                                         ? '.pdf'
-                                        : 'image/jpeg,image/png,image/webp'
+                                        : resource === 'certificates' &&
+                                            name === 'image'
+                                          ? 'image/jpeg,image/png,image/webp,application/pdf'
+                                          : 'image/jpeg,image/png,image/webp'
                                 }
                                 onChange={(event) =>
                                     type === 'multifile'
@@ -364,9 +395,11 @@ function Editor({
                                       ? 'PDF only, maximum 10 MB.'
                                       : name === 'photo'
                                         ? 'JPG, PNG or WebP · minimum 500×500 · maximum 4 MB.'
-                                        : resource === 'projects'
-                                          ? 'JPG, PNG or WebP · minimum 1000×500 · maximum 6 MB.'
-                                          : 'JPG, PNG or WebP · minimum 600×400 · maximum 4 MB.'}
+                                        : resource === 'certificates'
+                                          ? 'JPG, PNG, WebP or PDF · image minimum 600×400 · maximum 8 MB.'
+                                          : resource === 'projects'
+                                            ? 'JPG, PNG or WebP · minimum 1000×500 · maximum 6 MB.'
+                                            : 'JPG, PNG or WebP · minimum 600×400 · maximum 4 MB.'}
                             </p>
                         </div>
                     ) : (
