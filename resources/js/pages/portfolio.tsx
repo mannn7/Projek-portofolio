@@ -41,13 +41,6 @@ import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SeoData } from '@/types/seo';
 import { PdfThumbnail } from '@/components/pdf-thumbnail';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 
 type Profile = {
     name: string;
@@ -1754,82 +1747,6 @@ export default function Portfolio({
                                             <CertificateMedia
                                                 certificate={item}
                                             />
-                                            <div className="hidden">
-                                                {item.image &&
-                                                !isPdfPath(item.image) ? (
-                                                    <Dialog>
-                                                        <DialogTrigger asChild>
-                                                            <button
-                                                                type="button"
-                                                                className="relative block aspect-[1.414/1] w-full cursor-zoom-in overflow-hidden bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
-                                                                aria-label={`Preview certificate ${item.name}`}
-                                                            >
-                                                                <img
-                                                                    src={asset(
-                                                                        item.image,
-                                                                    )}
-                                                                    alt={`${item.name} issued by ${item.issuer}`}
-                                                                    loading="lazy"
-                                                                    decoding="async"
-                                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                                                                />
-                                                                <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-focus-within:opacity-100 group-hover:opacity-100">
-                                                                    Click to
-                                                                    view
-                                                                    certificate
-                                                                </span>
-                                                            </button>
-                                                        </DialogTrigger>
-                                                        <DialogContent className="max-h-[92vh] max-w-6xl overflow-auto border-white/10 bg-[#0b0e18] p-3 text-white sm:p-5">
-                                                            <DialogTitle className="pr-10 text-lg">
-                                                                {item.name}
-                                                            </DialogTitle>
-                                                            <DialogDescription className="text-slate-400">
-                                                                Issued by{' '}
-                                                                {item.issuer}
-                                                                {item.issued_at
-                                                                    ? ` · ${formatDate(item.issued_at)}`
-                                                                    : ''}
-                                                            </DialogDescription>
-                                                            <img
-                                                                src={asset(
-                                                                    item.image,
-                                                                )}
-                                                                alt={`${item.name} issued by ${item.issuer}`}
-                                                                className="max-h-[72vh] w-full rounded-xl bg-white object-contain"
-                                                            />
-                                                        </DialogContent>
-                                                    </Dialog>
-                                                ) : item.image ? (
-                                                    <a
-                                                        href={asset(item.image)}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="relative block aspect-[1.414/1] overflow-hidden bg-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
-                                                        aria-label={`Open certificate PDF ${item.name}`}
-                                                    >
-                                                        <PdfThumbnail
-                                                            src={asset(
-                                                                item.image!,
-                                                            )!}
-                                                            title={`Preview of ${item.name}`}
-                                                            className="pointer-events-none absolute inset-0 h-full w-full"
-                                                        />
-                                                        <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-focus-within:opacity-100 group-hover:opacity-100">
-                                                            Click to view
-                                                            certificate
-                                                        </span>
-                                                    </a>
-                                                ) : (
-                                                    <div className="flex aspect-[1.414/1] items-center justify-center bg-gradient-to-br from-violet-950/50 to-cyan-950/30">
-                                                        <Award
-                                                            className="text-violet-400"
-                                                            size={42}
-                                                            aria-hidden="true"
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
                                             <div className="flex flex-1 flex-col p-6">
                                                 <h3 className="text-lg font-semibold text-white">
                                                     {item.name}
