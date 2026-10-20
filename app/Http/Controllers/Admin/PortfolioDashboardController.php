@@ -89,6 +89,10 @@ class PortfolioDashboardController extends Controller
             }
         }
 
+        if ($record instanceof Certificate) {
+            Storage::disk('public')->delete($record->files ?? []);
+        }
+
         $record->delete();
 
         return back()->with('success', 'Item deleted successfully.');
@@ -193,6 +197,8 @@ class PortfolioDashboardController extends Controller
                 'name' => ['required', 'string', 'max:160'], 'issuer' => ['required', 'string', 'max:160'],
                 'issued_at' => ['nullable', 'date'], 'credential_url' => ['nullable', 'url', 'max:255'],
                 'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:8192'],
+                'files' => ['nullable', 'array', 'max:8'],
+                'files.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:8192'],
                 'sort_order' => ['integer', 'min:0', 'max:9999'], 'is_active' => ['boolean'],
             ],
             default => abort(404),
@@ -221,7 +227,7 @@ class PortfolioDashboardController extends Controller
         if ($resource === 'projects' && isset($data['technologies'])) {
             $data['technologies'] = array_values(array_filter(array_map('trim', explode(',', $data['technologies']))));
         }
-        unset($data['gallery']);
+        unset($data['gallery'], $data['files']);
 
         return $data;
     }
@@ -241,6 +247,22 @@ class PortfolioDashboardController extends Controller
                 $replacedFiles[] = $record->getAttribute($field);
             }
             $data[$field] = $request->file($field)->store($resource, 'public');
+        }
+
+        if ($resource === 'certificates' && $record instanceof Certificate && $request->hasFile('files')) {
+            $existingFiles = array_values(array_unique(array_filter([
+                $record->image,
+                ...($record->files ?? []),
+            ])));
+            $uploadedFiles = array_map(
+                fn ($file) => $file->store('certificates', 'public'),
+                $request->file('files', []),
+            );
+            $data['files'] = array_values(array_unique([...$existingFiles, ...$uploadedFiles]));
+
+            if (! $record->image && $uploadedFiles !== []) {
+                $data['image'] = $uploadedFiles[0];
+            }
         }
 
         return $replacedFiles;

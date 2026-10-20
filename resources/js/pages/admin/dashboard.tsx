@@ -103,6 +103,7 @@ const emptyData: Record<string, RecordData> = {
         issued_at: '',
         credential_url: '',
         image: null,
+        files: [],
         sort_order: 0,
         is_active: true,
     },
@@ -157,7 +158,7 @@ const fields: Record<string, Array<[string, string, string]>> = {
         ['issuer', 'Issuer', 'text'],
         ['issued_at', 'Issue date', 'date'],
         ['credential_url', 'Credential URL', 'url'],
-        ['image', 'Certificate file (image or PDF)', 'file'],
+        ['files', 'Certificate files (images or PDFs)', 'certfiles'],
         ['sort_order', 'Sort order', 'number'],
     ],
 };
@@ -189,6 +190,7 @@ function Editor({
         cv_file: null,
         image: null,
         gallery: [],
+        files: [],
     };
     const { data, setData, post, processing, errors } =
         useForm<RecordData>(normalized);
@@ -224,12 +226,19 @@ function Editor({
             return { ...current, [name]: URL.createObjectURL(file) };
         });
     };
-    const selectGallery = (files: FileList | null) => {
+    const selectMultipleFiles = (name: string, files: FileList | null) => {
         galleryPreviews.forEach((preview) => URL.revokeObjectURL(preview));
         const selected = files ? Array.from(files).slice(0, 8) : [];
-        setData('gallery', selected);
+        setData(name, selected);
         setGalleryPreviews(selected.map((file) => URL.createObjectURL(file)));
     };
+    const certificateFiles = Array.from(
+        new Set(
+            [initial.image, ...(initial.files ?? [])].filter(
+                (path): path is string => Boolean(path),
+            ),
+        ),
+    );
     const toggles =
         resource === 'profile'
             ? [['available_for_work', 'Available for work']]
@@ -260,7 +269,9 @@ function Editor({
                             onChange={(e) => setData(name, e.target.value)}
                             className="admin-input resize-y"
                         />
-                    ) : type === 'file' || type === 'multifile' ? (
+                    ) : type === 'file' ||
+                      type === 'multifile' ||
+                      type === 'certfiles' ? (
                         <div className="rounded-2xl border border-dashed border-white/15 bg-black/20 p-4">
                             {name !== 'cv_file' &&
                                 !(
@@ -378,20 +389,72 @@ function Editor({
                                         )}
                                     </div>
                                 )}
+                            {type === 'certfiles' && (
+                                <div className="mb-4 grid gap-3 sm:grid-cols-2">
+                                    {certificateFiles.map((path, index) => (
+                                        <a
+                                            key={path}
+                                            href={mediaUrl(path)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="aspect-[1.414/1] overflow-hidden rounded-xl border border-white/10 bg-white"
+                                        >
+                                            {isPdfPath(path) ? (
+                                                <PdfThumbnail
+                                                    src={mediaUrl(path)!}
+                                                    title={`Certificate file ${index + 1}`}
+                                                    className="h-full w-full"
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={mediaUrl(path)}
+                                                    alt={`Certificate file ${index + 1}`}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            )}
+                                        </a>
+                                    ))}
+                                    {galleryPreviews.map((preview, index) => (
+                                        <div
+                                            key={preview}
+                                            className="aspect-[1.414/1] overflow-hidden rounded-xl border border-violet-400/20 bg-white"
+                                        >
+                                            {data.files[index]?.type ===
+                                            'application/pdf' ? (
+                                                <PdfThumbnail
+                                                    src={preview}
+                                                    title={`New certificate file ${index + 1}`}
+                                                    className="h-full w-full"
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={preview}
+                                                    alt={`New certificate file ${index + 1}`}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                             <input
                                 type="file"
-                                multiple={type === 'multifile'}
+                                multiple={
+                                    type === 'multifile' || type === 'certfiles'
+                                }
                                 accept={
                                     name === 'cv_file'
                                         ? '.pdf'
-                                        : resource === 'certificates' &&
-                                            name === 'image'
+                                        : type === 'certfiles'
                                           ? 'image/jpeg,image/png,image/webp,application/pdf'
                                           : 'image/jpeg,image/png,image/webp'
                                 }
                                 onChange={(event) =>
-                                    type === 'multifile'
-                                        ? selectGallery(event.target.files)
+                                    type === 'multifile' || type === 'certfiles'
+                                        ? selectMultipleFiles(
+                                              name,
+                                              event.target.files,
+                                          )
                                         : selectFile(
                                               name,
                                               event.target.files?.[0] ?? null,
@@ -407,7 +470,7 @@ function Editor({
                                       : name === 'photo'
                                         ? 'JPG, PNG or WebP · minimum 500×500 · maximum 4 MB.'
                                         : resource === 'certificates'
-                                          ? 'JPG, PNG, WebP or PDF · image minimum 600×400 · maximum 8 MB.'
+                                          ? 'Choose up to 8 JPG, PNG, WebP or PDF files · maximum 8 MB each.'
                                           : resource === 'projects'
                                             ? 'JPG, PNG or WebP · minimum 1000×500 · maximum 6 MB.'
                                             : 'JPG, PNG or WebP · minimum 600×400 · maximum 4 MB.'}

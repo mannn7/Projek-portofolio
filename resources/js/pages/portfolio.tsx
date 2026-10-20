@@ -36,7 +36,7 @@ import {
     SiTypescript,
 } from 'react-icons/si';
 import type { FormEvent } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SeoData } from '@/types/seo';
 import { PdfThumbnail } from '@/components/pdf-thumbnail';
 import {
@@ -88,6 +88,7 @@ type Certificate = {
     issued_at?: string;
     credential_url?: string;
     image?: string;
+    files?: string[];
 };
 type Props = {
     profile: Profile | null;
@@ -587,6 +588,98 @@ function TechMark({
     );
 }
 
+function CertificateMedia({ certificate }: { certificate: Certificate }) {
+    const reduceMotion = useReducedMotion();
+    const [activeFile, setActiveFile] = useState(0);
+    const [paused, setPaused] = useState(false);
+    const files = Array.from(
+        new Set(
+            [certificate.image, ...(certificate.files ?? [])].filter(
+                (path): path is string => Boolean(path),
+            ),
+        ),
+    );
+
+    useEffect(() => {
+        if (files.length < 2 || paused || reduceMotion) return;
+        const timer = window.setInterval(
+            () => setActiveFile((current) => (current + 1) % files.length),
+            3800,
+        );
+        return () => window.clearInterval(timer);
+    }, [files.length, paused, reduceMotion]);
+
+    const currentFile = files[activeFile];
+    if (!currentFile) {
+        return (
+            <div className="flex aspect-[1.414/1] items-center justify-center bg-gradient-to-br from-violet-950/50 to-cyan-950/30">
+                <Award
+                    className="text-violet-400"
+                    size={42}
+                    aria-hidden="true"
+                />
+            </div>
+        );
+    }
+
+    return (
+        <div
+            className="relative aspect-[1.414/1] overflow-hidden bg-white"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+        >
+            <a
+                href={asset(currentFile)}
+                target="_blank"
+                rel="noreferrer"
+                className="group/media absolute inset-0 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
+                aria-label={`Open certificate ${certificate.name}, file ${activeFile + 1} of ${files.length}`}
+            >
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentFile}
+                        initial={reduceMotion ? false : { opacity: 0, x: 22 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={reduceMotion ? undefined : { opacity: 0, x: -22 }}
+                        transition={{ duration: 0.45 }}
+                        className="absolute inset-0"
+                    >
+                        {isPdfPath(currentFile) ? (
+                            <PdfThumbnail
+                                src={asset(currentFile)!}
+                                title={`Preview of ${certificate.name}`}
+                                className="h-full w-full"
+                            />
+                        ) : (
+                            <img
+                                src={asset(currentFile)}
+                                alt={`${certificate.name} issued by ${certificate.issuer}`}
+                                className="h-full w-full object-cover"
+                            />
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+                <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-hover/media:opacity-100 group-focus-visible/media:opacity-100">
+                    Click to view certificate
+                </span>
+            </a>
+            {files.length > 1 && (
+                <div className="absolute top-3 right-3 z-10 flex gap-1.5 rounded-full bg-slate-950/70 p-2 backdrop-blur">
+                    {files.map((file, index) => (
+                        <button
+                            key={file}
+                            type="button"
+                            onClick={() => setActiveFile(index)}
+                            className={`size-2 rounded-full transition ${index === activeFile ? 'bg-white' : 'bg-white/35 hover:bg-white/70'}`}
+                            aria-label={`Show certificate file ${index + 1}`}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function Portfolio({
     profile: storedProfile,
     projects,
@@ -596,9 +689,6 @@ export default function Portfolio({
     seo,
 }: Props) {
     const reduceMotion = useReducedMotion();
-    const certificateCarouselRef = useRef<HTMLDivElement>(null);
-    const [certificateCarouselPaused, setCertificateCarouselPaused] =
-        useState(false);
     const [showIntro, setShowIntro] = useState(true);
     const completeIntro = useCallback(() => setShowIntro(false), []);
     const { scrollYProgress } = useScroll();
@@ -627,39 +717,6 @@ export default function Portfolio({
         [projects],
     );
     const [category, setCategory] = useState('All');
-    useEffect(() => {
-        const carousel = certificateCarouselRef.current;
-        if (
-            !carousel ||
-            certificates.length < 2 ||
-            reduceMotion ||
-            certificateCarouselPaused
-        ) {
-            return;
-        }
-
-        const timer = window.setInterval(() => {
-            const firstCard = carousel.firstElementChild as HTMLElement | null;
-            if (!firstCard || carousel.scrollWidth <= carousel.clientWidth) {
-                return;
-            }
-
-            const gap = Number.parseFloat(
-                window.getComputedStyle(carousel).columnGap || '0',
-            );
-            const step = firstCard.getBoundingClientRect().width + gap;
-            const atEnd =
-                carousel.scrollLeft >=
-                carousel.scrollWidth - carousel.clientWidth - 8;
-
-            carousel.scrollTo({
-                left: atEnd ? 0 : carousel.scrollLeft + step,
-                behavior: 'smooth',
-            });
-        }, 3800);
-
-        return () => window.clearInterval(timer);
-    }, [certificateCarouselPaused, certificates.length, reduceMotion]);
     const projectCounts = useMemo(
         () =>
             projects.reduce<Record<string, number>>(
@@ -1491,108 +1548,89 @@ export default function Portfolio({
                             copy="Verified certificates and credentials managed from the private portfolio CMS."
                         />
                         {certificates.length > 0 ? (
-                            <div
-                                ref={certificateCarouselRef}
-                                className="flex snap-x snap-mandatory [scrollbar-width:none] gap-5 overflow-x-auto scroll-smooth pb-3 [&::-webkit-scrollbar]:hidden"
-                                onMouseEnter={() =>
-                                    setCertificateCarouselPaused(true)
-                                }
-                                onMouseLeave={() =>
-                                    setCertificateCarouselPaused(false)
-                                }
-                                onFocusCapture={() =>
-                                    setCertificateCarouselPaused(true)
-                                }
-                                onBlurCapture={(event) => {
-                                    if (
-                                        !event.currentTarget.contains(
-                                            event.relatedTarget,
-                                        )
-                                    ) {
-                                        setCertificateCarouselPaused(false);
-                                    }
-                                }}
-                                aria-label="Certificate carousel"
-                            >
+                            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                                 {certificates.map((item) => (
-                                    <Reveal
-                                        key={item.id}
-                                        className={`h-auto w-[88%] shrink-0 snap-start sm:w-[72%] ${certificates.length === 2 ? 'md:w-[60%]' : 'md:w-[calc((100%_-_1.25rem)/2)] lg:w-[calc((100%_-_2.5rem)/3)]'}`}
-                                    >
+                                    <Reveal key={item.id} className="h-full">
                                         <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[.03] transition hover:-translate-y-1 hover:border-violet-400/30">
-                                            {item.image &&
-                                            !isPdfPath(item.image) ? (
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <button
-                                                            type="button"
-                                                            className="relative block aspect-[1.414/1] w-full cursor-zoom-in overflow-hidden bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
-                                                            aria-label={`Preview certificate ${item.name}`}
-                                                        >
+                                            <CertificateMedia
+                                                certificate={item}
+                                            />
+                                            <div className="hidden">
+                                                {item.image &&
+                                                !isPdfPath(item.image) ? (
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <button
+                                                                type="button"
+                                                                className="relative block aspect-[1.414/1] w-full cursor-zoom-in overflow-hidden bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
+                                                                aria-label={`Preview certificate ${item.name}`}
+                                                            >
+                                                                <img
+                                                                    src={asset(
+                                                                        item.image,
+                                                                    )}
+                                                                    alt={`${item.name} issued by ${item.issuer}`}
+                                                                    loading="lazy"
+                                                                    decoding="async"
+                                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                                                                />
+                                                                <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-focus-within:opacity-100 group-hover:opacity-100">
+                                                                    Click to
+                                                                    view
+                                                                    certificate
+                                                                </span>
+                                                            </button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="max-h-[92vh] max-w-6xl overflow-auto border-white/10 bg-[#0b0e18] p-3 text-white sm:p-5">
+                                                            <DialogTitle className="pr-10 text-lg">
+                                                                {item.name}
+                                                            </DialogTitle>
+                                                            <DialogDescription className="text-slate-400">
+                                                                Issued by{' '}
+                                                                {item.issuer}
+                                                                {item.issued_at
+                                                                    ? ` · ${formatDate(item.issued_at)}`
+                                                                    : ''}
+                                                            </DialogDescription>
                                                             <img
                                                                 src={asset(
                                                                     item.image,
                                                                 )}
                                                                 alt={`${item.name} issued by ${item.issuer}`}
-                                                                loading="lazy"
-                                                                decoding="async"
-                                                                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                                                                className="max-h-[72vh] w-full rounded-xl bg-white object-contain"
                                                             />
-                                                            <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-focus-within:opacity-100 group-hover:opacity-100">
-                                                                Click to view
-                                                                certificate
-                                                            </span>
-                                                        </button>
-                                                    </DialogTrigger>
-                                                    <DialogContent className="max-h-[92vh] max-w-6xl overflow-auto border-white/10 bg-[#0b0e18] p-3 text-white sm:p-5">
-                                                        <DialogTitle className="pr-10 text-lg">
-                                                            {item.name}
-                                                        </DialogTitle>
-                                                        <DialogDescription className="text-slate-400">
-                                                            Issued by{' '}
-                                                            {item.issuer}
-                                                            {item.issued_at
-                                                                ? ` · ${formatDate(item.issued_at)}`
-                                                                : ''}
-                                                        </DialogDescription>
-                                                        <img
+                                                        </DialogContent>
+                                                    </Dialog>
+                                                ) : item.image ? (
+                                                    <a
+                                                        href={asset(item.image)}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="relative block aspect-[1.414/1] overflow-hidden bg-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
+                                                        aria-label={`Open certificate PDF ${item.name}`}
+                                                    >
+                                                        <PdfThumbnail
                                                             src={asset(
-                                                                item.image,
-                                                            )}
-                                                            alt={`${item.name} issued by ${item.issuer}`}
-                                                            className="max-h-[72vh] w-full rounded-xl bg-white object-contain"
+                                                                item.image!,
+                                                            )!}
+                                                            title={`Preview of ${item.name}`}
+                                                            className="pointer-events-none absolute inset-0 h-full w-full"
                                                         />
-                                                    </DialogContent>
-                                                </Dialog>
-                                            ) : item.image ? (
-                                                <a
-                                                    href={asset(item.image)}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="relative block aspect-[1.414/1] overflow-hidden bg-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
-                                                    aria-label={`Open certificate PDF ${item.name}`}
-                                                >
-                                                    <PdfThumbnail
-                                                        src={asset(
-                                                            item.image!,
-                                                        )!}
-                                                        title={`Preview of ${item.name}`}
-                                                        className="pointer-events-none absolute inset-0 h-full w-full"
-                                                    />
-                                                    <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-focus-within:opacity-100 group-hover:opacity-100">
-                                                        Click to view
-                                                        certificate
-                                                    </span>
-                                                </a>
-                                            ) : (
-                                                <div className="flex aspect-[1.414/1] items-center justify-center bg-gradient-to-br from-violet-950/50 to-cyan-950/30">
-                                                    <Award
-                                                        className="text-violet-400"
-                                                        size={42}
-                                                        aria-hidden="true"
-                                                    />
-                                                </div>
-                                            )}
+                                                        <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-focus-within:opacity-100 group-hover:opacity-100">
+                                                            Click to view
+                                                            certificate
+                                                        </span>
+                                                    </a>
+                                                ) : (
+                                                    <div className="flex aspect-[1.414/1] items-center justify-center bg-gradient-to-br from-violet-950/50 to-cyan-950/30">
+                                                        <Award
+                                                            className="text-violet-400"
+                                                            size={42}
+                                                            aria-hidden="true"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="flex flex-1 flex-col p-6">
                                                 <h3 className="text-lg font-semibold text-white">
                                                     {item.name}

@@ -254,6 +254,37 @@ class PortfolioTest extends TestCase
         Storage::disk('public')->assertExists($certificate->image);
     }
 
+    public function test_admin_can_append_multiple_files_to_a_certificate(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $certificate = Certificate::query()->create([
+            'name' => 'Multi-file Certificate',
+            'issuer' => 'Example Issuer',
+            'is_active' => true,
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.update', ['resource' => 'certificates', 'id' => $certificate->id]), [
+                'name' => $certificate->name,
+                'issuer' => $certificate->issuer,
+                'files' => [
+                    UploadedFile::fake()->image('front.jpg', 1200, 800),
+                    UploadedFile::fake()->create('back.pdf', 256, 'application/pdf'),
+                ],
+                'sort_order' => 0,
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $certificate->refresh();
+        $this->assertCount(2, $certificate->files);
+        foreach ($certificate->files as $file) {
+            Storage::disk('public')->assertExists($file);
+        }
+    }
+
     public function test_public_contact_form_stores_a_valid_message(): void
     {
         $this->post(route('contact.store'), [

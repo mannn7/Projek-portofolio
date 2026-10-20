@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Certificate extends Model
 {
     protected $fillable = [
-        'name', 'issuer', 'issued_at', 'credential_url', 'image',
+        'name', 'issuer', 'issued_at', 'credential_url', 'image', 'files',
         'sort_order', 'is_active',
     ];
 
@@ -15,6 +15,7 @@ class Certificate extends Model
     {
         return [
             'issued_at' => 'date',
+            'files' => 'array',
             'is_active' => 'boolean',
         ];
     }
