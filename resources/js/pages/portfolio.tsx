@@ -426,7 +426,7 @@ function PortfolioIntro({ onComplete }: { onComplete: () => void }) {
                     transition={{ delay: 1.75, duration: 0.55 }}
                     className="font-mono text-[10px] tracking-[.24em] text-slate-300 uppercase sm:text-xs"
                 >
-                    Laravel · React · TypeScript
+                    Crafting modern digital experiences.
                 </motion.p>
 
                 <div className="mx-auto mt-6 max-w-sm">
