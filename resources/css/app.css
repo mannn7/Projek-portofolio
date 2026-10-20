@@ -185,6 +185,39 @@
     mask-image: linear-gradient(to bottom, black, transparent 88%);
 }
 
+.hero-starfield {
+    background-image:
+        radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.48) 0 0.7px,
+            transparent 1px
+        ),
+        radial-gradient(
+            circle,
+            rgba(167, 139, 250, 0.38) 0 0.8px,
+            transparent 1.2px
+        ),
+        radial-gradient(
+            circle,
+            rgba(103, 232, 249, 0.32) 0 0.65px,
+            transparent 1px
+        );
+    background-position:
+        0 0,
+        20px 12px,
+        8px 28px;
+    background-size:
+        86px 86px,
+        127px 127px,
+        163px 163px;
+    mask-image: linear-gradient(
+        to bottom,
+        black 4%,
+        black 70%,
+        transparent 98%
+    );
+}
+
 @keyframes tech-marquee {
     from {
         transform: translateX(0);

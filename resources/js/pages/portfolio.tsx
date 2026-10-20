@@ -997,7 +997,7 @@ export default function Portfolio({
                     />
                     <motion.div
                         aria-hidden="true"
-                        className="portfolio-grid absolute inset-0 opacity-30"
+                        className="portfolio-grid absolute inset-0 opacity-40"
                         animate={
                             reduceMotion
                                 ? undefined
@@ -1014,11 +1014,85 @@ export default function Portfolio({
                             ease: 'linear',
                         }}
                     />
+                    <motion.div
+                        aria-hidden="true"
+                        className="hero-starfield absolute inset-0 opacity-65"
+                        animate={
+                            reduceMotion
+                                ? undefined
+                                : {
+                                      backgroundPosition: [
+                                          '0px 0px, 20px 12px, 8px 28px',
+                                          '46px -30px, -24px 52px, 62px 4px',
+                                      ],
+                                  }
+                        }
+                        transition={{
+                            duration: 24,
+                            repeat: Infinity,
+                            repeatType: 'mirror',
+                            ease: 'easeInOut',
+                        }}
+                    />
+                    <motion.div
+                        aria-hidden="true"
+                        className="absolute top-[16%] right-[4%] h-[32rem] w-[52rem] rounded-[50%] border border-violet-300/[.07] shadow-[0_0_80px_rgba(139,92,246,.05)]"
+                        animate={
+                            reduceMotion
+                                ? undefined
+                                : { rotate: [-8, -3, -8], scale: [1, 1.04, 1] }
+                        }
+                        transition={{
+                            duration: 18,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                        }}
+                    />
+                    <motion.div
+                        aria-hidden="true"
+                        className="absolute top-[31%] right-[10%] h-[22rem] w-[39rem] rounded-[50%] border border-cyan-300/[.055]"
+                        animate={
+                            reduceMotion
+                                ? undefined
+                                : { rotate: [7, 12, 7], scale: [1.03, 1, 1.03] }
+                        }
+                        transition={{
+                            duration: 15,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                        }}
+                    />
+                    {Array.from({ length: 24 }).map((_, index) => (
+                        <motion.span
+                            key={`star-${index}`}
+                            aria-hidden="true"
+                            className={`absolute rounded-full bg-white ${index % 5 === 0 ? 'size-1 shadow-[0_0_10px_rgba(103,232,249,.9)]' : 'size-0.5'}`}
+                            style={{
+                                top: `${8 + ((index * 37) % 84)}%`,
+                                left: `${2 + ((index * 43) % 96)}%`,
+                            }}
+                            animate={
+                                reduceMotion
+                                    ? undefined
+                                    : {
+                                          opacity: [0.12, 0.75, 0.2],
+                                          scale: [0.75, 1.25, 0.85],
+                                      }
+                            }
+                            transition={{
+                                duration: 3.4 + (index % 6) * 0.7,
+                                delay: (index % 8) * 0.38,
+                                repeat: Infinity,
+                                repeatType: 'mirror',
+                                ease: 'easeInOut',
+                            }}
+                        />
+                    ))}
                     {Array.from({ length: 12 }).map((_, index) => (
                         <motion.span
                             key={index}
                             aria-hidden="true"
-                            className="absolute hidden h-px w-16 bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent sm:block"
+                            className="absolute hidden h-px w-20 bg-gradient-to-r from-transparent via-cyan-200/80 to-transparent shadow-[0_0_8px_rgba(34,211,238,.28)] sm:block"
                             style={{
                                 top: `${14 + ((index * 19) % 72)}%`,
                                 left: `${4 + ((index * 23) % 88)}%`,
