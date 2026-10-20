@@ -1518,11 +1518,12 @@ export default function Portfolio({
                                                         )}
                                                         title={`Preview of ${item.name}`}
                                                         loading="lazy"
-                                                        className="pointer-events-none h-full w-full bg-white"
+                                                        className="pointer-events-none absolute inset-1/2 h-[110%] w-[110%] -translate-x-1/2 -translate-y-1/2 bg-white"
                                                         tabIndex={-1}
                                                     />
-                                                    <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/20 bg-slate-950/85 px-4 py-2 text-center text-xs font-semibold text-white opacity-90 shadow-lg backdrop-blur-md transition group-hover:bg-violet-600">
-                                                        Open full PDF
+                                                    <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-focus-within:opacity-100 group-hover:opacity-100">
+                                                        Click to view
+                                                        certificate
                                                     </span>
                                                 </a>
                                             ) : (
