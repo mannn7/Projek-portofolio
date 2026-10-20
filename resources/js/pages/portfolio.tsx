@@ -1458,8 +1458,8 @@ export default function Portfolio({
                         {certificates.length > 0 ? (
                             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                                 {certificates.map((item) => (
-                                    <Reveal key={item.id}>
-                                        <article className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[.03] transition hover:-translate-y-1 hover:border-violet-400/30">
+                                    <Reveal key={item.id} className="h-full">
+                                        <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[.03] transition hover:-translate-y-1 hover:border-violet-400/30">
                                             {item.image &&
                                             !isPdfPath(item.image) ? (
                                                 <Dialog>
@@ -1535,7 +1535,7 @@ export default function Portfolio({
                                                     />
                                                 </div>
                                             )}
-                                            <div className="p-6">
+                                            <div className="flex flex-1 flex-col p-6">
                                                 <h3 className="text-lg font-semibold text-white">
                                                     {item.name}
                                                 </h3>
