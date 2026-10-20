@@ -30,7 +30,7 @@ import {
     SiTypescript,
 } from 'react-icons/si';
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SeoData } from '@/types/seo';
 import {
     Dialog,
@@ -168,6 +168,193 @@ const formatDate = (value?: string) =>
           }).format(new Date(value))
         : 'Present';
 
+const INTRO_SESSION_KEY = 'fadev-intro-seen-v1';
+
+function PortfolioIntro({ onComplete }: { onComplete: () => void }) {
+    const reduceMotion = useReducedMotion();
+
+    useEffect(() => {
+        const forceReplay = new URLSearchParams(window.location.search).has(
+            'intro',
+        );
+        const hasSeenIntro = sessionStorage.getItem(INTRO_SESSION_KEY) === '1';
+
+        if ((hasSeenIntro && !forceReplay) || reduceMotion) {
+            onComplete();
+
+            return;
+        }
+
+        document.body.style.overflow = 'hidden';
+        const timer = window.setTimeout(() => {
+            sessionStorage.setItem(INTRO_SESSION_KEY, '1');
+            onComplete();
+        }, 3200);
+
+        return () => {
+            window.clearTimeout(timer);
+            document.body.style.overflow = '';
+        };
+    }, [onComplete, reduceMotion]);
+
+    const finish = () => {
+        sessionStorage.setItem(INTRO_SESSION_KEY, '1');
+        document.body.style.overflow = '';
+        onComplete();
+    };
+
+    return (
+        <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label="FA.DEV portfolio introduction"
+            className="fixed inset-0 z-[100] grid place-items-center overflow-hidden bg-[#05070d] text-white"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        >
+            <div
+                className="absolute inset-0 opacity-30"
+                aria-hidden="true"
+                style={{
+                    backgroundImage:
+                        'linear-gradient(rgba(139,92,246,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,.09) 1px, transparent 1px)',
+                    backgroundSize: '56px 56px',
+                    maskImage:
+                        'radial-gradient(circle at center, black 15%, transparent 72%)',
+                }}
+            />
+            <motion.div
+                aria-hidden="true"
+                className="absolute h-[42rem] w-[42rem] rounded-full border border-violet-400/15"
+                initial={{ scale: 0.35, opacity: 0, rotate: -45 }}
+                animate={{ scale: 1, opacity: 1, rotate: 45 }}
+                transition={{ duration: 2.4, ease: [0.16, 1, 0.3, 1] }}
+            />
+            <motion.div
+                aria-hidden="true"
+                className="absolute h-80 w-80 rounded-full border border-dashed border-cyan-300/20"
+                animate={{ rotate: 180 }}
+                transition={{ duration: 5, ease: 'linear', repeat: Infinity }}
+            />
+            <motion.div
+                aria-hidden="true"
+                className="absolute h-64 w-64 rounded-full bg-violet-600/20 blur-[90px]"
+                initial={{ scale: 0.2, opacity: 0 }}
+                animate={{ scale: 1.5, opacity: [0, 0.8, 0.4] }}
+                transition={{ duration: 2.2 }}
+            />
+
+            <div className="relative z-10 w-full max-w-xl px-7 text-center">
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="mb-10 flex items-center justify-center gap-3 font-mono text-[10px] tracking-[.28em] text-cyan-300 uppercase sm:text-xs"
+                >
+                    <span className="size-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_14px_#34d399]" />
+                    Initializing digital workspace
+                </motion.div>
+
+                <div className="relative mx-auto flex h-36 items-center justify-center overflow-hidden sm:h-44">
+                    <motion.span
+                        initial={{ x: -80, opacity: 0, filter: 'blur(12px)' }}
+                        animate={{ x: 0, opacity: 1, filter: 'blur(0px)' }}
+                        transition={{ delay: 0.35, duration: 0.8 }}
+                        className="text-6xl font-black tracking-[-.08em] sm:text-8xl"
+                    >
+                        FA
+                    </motion.span>
+                    <motion.span
+                        initial={{ scale: 0, rotate: -90 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{
+                            delay: 0.85,
+                            type: 'spring',
+                            stiffness: 220,
+                            damping: 16,
+                        }}
+                        className="mx-1 text-6xl font-black text-violet-400 sm:text-8xl"
+                    >
+                        .
+                    </motion.span>
+                    <motion.span
+                        initial={{ x: 80, opacity: 0, filter: 'blur(12px)' }}
+                        animate={{ x: 0, opacity: 1, filter: 'blur(0px)' }}
+                        transition={{ delay: 0.55, duration: 0.8 }}
+                        className="bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-6xl font-black tracking-[-.08em] text-transparent sm:text-8xl"
+                    >
+                        DEV
+                    </motion.span>
+                    <motion.span
+                        aria-hidden="true"
+                        className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_18px_#22d3ee]"
+                        initial={{ top: '0%', opacity: 0 }}
+                        animate={{ top: ['0%', '100%'], opacity: [0, 1, 0] }}
+                        transition={{ delay: 0.55, duration: 1.3 }}
+                    />
+                </div>
+
+                <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.25, duration: 0.55 }}
+                    className="font-mono text-xs tracking-[.24em] text-slate-400 uppercase"
+                >
+                    Laravel · React · TypeScript
+                </motion.p>
+
+                <div className="mx-auto mt-10 max-w-sm">
+                    <div className="mb-3 flex justify-between font-mono text-[10px] tracking-widest text-slate-500 uppercase">
+                        <span>System ready</span>
+                        <motion.span
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 2.25 }}
+                        >
+                            100%
+                        </motion.span>
+                    </div>
+                    <div className="h-1 overflow-hidden rounded-full bg-white/10">
+                        <motion.div
+                            className="h-full origin-left rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-400 to-cyan-300 shadow-[0_0_18px_rgba(34,211,238,.65)]"
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: 1 }}
+                            transition={{
+                                delay: 0.3,
+                                duration: 2.25,
+                                ease: [0.65, 0, 0.35, 1],
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <button
+                type="button"
+                onClick={finish}
+                className="absolute right-6 bottom-6 z-20 rounded-full border border-white/10 bg-white/[.04] px-4 py-2 font-mono text-[10px] tracking-[.18em] text-slate-400 uppercase transition hover:border-white/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:right-9 sm:bottom-9"
+            >
+                Skip intro
+            </button>
+
+            <motion.div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 left-0 z-30 w-1/2 bg-[#070910]"
+                initial={{ x: '-100%' }}
+                animate={{ x: ['-100%', '-100%', '0%', '-100%'] }}
+                transition={{ times: [0, 0.86, 0.87, 1], duration: 3.2 }}
+            />
+            <motion.div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 right-0 z-30 w-1/2 bg-[#070910]"
+                initial={{ x: '100%' }}
+                animate={{ x: ['100%', '100%', '0%', '100%'] }}
+                transition={{ times: [0, 0.86, 0.87, 1], duration: 3.2 }}
+            />
+        </motion.div>
+    );
+}
+
 function Reveal({
     children,
     className = '',
@@ -254,6 +441,8 @@ export default function Portfolio({
     seo,
 }: Props) {
     const reduceMotion = useReducedMotion();
+    const [showIntro, setShowIntro] = useState(true);
+    const completeIntro = useCallback(() => setShowIntro(false), []);
     const profile = {
         ...defaults,
         ...storedProfile,
@@ -324,6 +513,9 @@ export default function Portfolio({
             id="top"
             className="min-h-screen overflow-x-hidden bg-[#070910] text-slate-200 selection:bg-violet-500/40"
         >
+            <AnimatePresence>
+                {showIntro && <PortfolioIntro onComplete={completeIntro} />}
+            </AnimatePresence>
             <Head title={seo.title}>
                 <meta name="description" content={seo.description} />
                 <link rel="canonical" href={seo.canonical} />
