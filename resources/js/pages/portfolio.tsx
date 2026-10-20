@@ -107,6 +107,8 @@ const defaults: Profile = {
 };
 
 const isPdfPath = (path?: string) => Boolean(path && /\.pdf$/i.test(path));
+const pdfPreviewUrl = (url: string) =>
+    `${url}#page=1&toolbar=0&navpanes=0&scrollbar=0`;
 type Technology = {
     name: string;
     icon: IconType;
@@ -1507,18 +1509,20 @@ export default function Portfolio({
                                                     href={asset(item.image)}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-violet-950/60 to-cyan-950/30 transition hover:from-violet-900/60 hover:to-cyan-900/40 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
+                                                    className="relative block aspect-[4/3] overflow-hidden bg-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
                                                     aria-label={`Open certificate PDF ${item.name}`}
                                                 >
-                                                    <span className="text-center">
-                                                        <Award
-                                                            className="mx-auto text-violet-300"
-                                                            size={48}
-                                                            aria-hidden="true"
-                                                        />
-                                                        <span className="mt-4 block text-sm font-semibold text-violet-100">
-                                                            View certificate PDF
-                                                        </span>
+                                                    <iframe
+                                                        src={pdfPreviewUrl(
+                                                            asset(item.image!)!,
+                                                        )}
+                                                        title={`Preview of ${item.name}`}
+                                                        loading="lazy"
+                                                        className="pointer-events-none h-full w-full bg-white"
+                                                        tabIndex={-1}
+                                                    />
+                                                    <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/20 bg-slate-950/85 px-4 py-2 text-center text-xs font-semibold text-white opacity-90 shadow-lg backdrop-blur-md transition group-hover:bg-violet-600">
+                                                        Open full PDF
                                                     </span>
                                                 </a>
                                             ) : (

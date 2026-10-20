@@ -165,6 +165,8 @@ const mediaUrl = (path?: string) =>
     path ? (path.startsWith('/') ? path : `/storage/${path}`) : undefined;
 
 const isPdfPath = (path?: string) => Boolean(path && /\.pdf$/i.test(path));
+const pdfPreviewUrl = (url?: string) =>
+    url ? `${url}#page=1&toolbar=0&navpanes=0&scrollbar=0` : undefined;
 
 function Editor({
     resource,
@@ -286,17 +288,28 @@ function Editor({
                                     data[name].type === 'application/pdf') ||
                                     (!previews[name] &&
                                         isPdfPath(initial[name]))) && (
-                                    <a
-                                        href={
-                                            previews[name] ||
-                                            mediaUrl(initial[name])
-                                        }
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="mb-4 flex aspect-video items-center justify-center rounded-xl border border-violet-400/20 bg-violet-500/10 text-sm font-semibold text-violet-200 transition hover:bg-violet-500/15"
-                                    >
-                                        Open certificate PDF
-                                    </a>
+                                    <div className="relative mb-4 aspect-video overflow-hidden rounded-xl border border-violet-400/20 bg-white">
+                                        <iframe
+                                            src={pdfPreviewUrl(
+                                                previews[name] ||
+                                                    mediaUrl(initial[name]),
+                                            )}
+                                            title="Certificate PDF preview"
+                                            loading="lazy"
+                                            className="pointer-events-none h-full w-full bg-white"
+                                        />
+                                        <a
+                                            href={
+                                                previews[name] ||
+                                                mediaUrl(initial[name])
+                                            }
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="absolute right-3 bottom-3 rounded-full border border-white/20 bg-slate-950/85 px-4 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur transition hover:bg-violet-600"
+                                        >
+                                            Open full PDF
+                                        </a>
+                                    </div>
                                 )}
                             {name === 'cv_file' && initial.cv_file && (
                                 <a
@@ -676,7 +689,15 @@ export default function AdminDashboard(props: Props) {
                                     className="flex flex-col items-stretch justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5 sm:flex-row sm:items-center"
                                 >
                                     <div className="flex min-w-0 items-center gap-4">
-                                        {(item.image || item.photo) && (
+                                        {(item.image || item.photo) &&
+                                        isPdfPath(item.image || item.photo) ? (
+                                            <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl border border-violet-400/20 bg-violet-500/10 text-violet-300">
+                                                <FileBadge size={23} />
+                                                <span className="mt-0.5 text-[9px] font-bold tracking-wider">
+                                                    PDF
+                                                </span>
+                                            </div>
+                                        ) : item.image || item.photo ? (
                                             <img
                                                 src={mediaUrl(
                                                     item.image || item.photo,
@@ -684,7 +705,7 @@ export default function AdminDashboard(props: Props) {
                                                 alt=""
                                                 className="size-14 shrink-0 rounded-xl object-cover"
                                             />
-                                        )}
+                                        ) : null}
                                         <div className="min-w-0">
                                             <h2 className="font-semibold text-white">
                                                 {titleFor(item)}
