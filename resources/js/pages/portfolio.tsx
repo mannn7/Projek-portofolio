@@ -36,7 +36,7 @@ import {
     SiTypescript,
 } from 'react-icons/si';
 import type { FormEvent } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SeoData } from '@/types/seo';
 import { PdfThumbnail } from '@/components/pdf-thumbnail';
 import {
@@ -596,6 +596,9 @@ export default function Portfolio({
     seo,
 }: Props) {
     const reduceMotion = useReducedMotion();
+    const certificateCarouselRef = useRef<HTMLDivElement>(null);
+    const [certificateCarouselPaused, setCertificateCarouselPaused] =
+        useState(false);
     const [showIntro, setShowIntro] = useState(true);
     const completeIntro = useCallback(() => setShowIntro(false), []);
     const { scrollYProgress } = useScroll();
@@ -624,6 +627,39 @@ export default function Portfolio({
         [projects],
     );
     const [category, setCategory] = useState('All');
+    useEffect(() => {
+        const carousel = certificateCarouselRef.current;
+        if (
+            !carousel ||
+            certificates.length < 2 ||
+            reduceMotion ||
+            certificateCarouselPaused
+        ) {
+            return;
+        }
+
+        const timer = window.setInterval(() => {
+            const firstCard = carousel.firstElementChild as HTMLElement | null;
+            if (!firstCard || carousel.scrollWidth <= carousel.clientWidth) {
+                return;
+            }
+
+            const gap = Number.parseFloat(
+                window.getComputedStyle(carousel).columnGap || '0',
+            );
+            const step = firstCard.getBoundingClientRect().width + gap;
+            const atEnd =
+                carousel.scrollLeft >=
+                carousel.scrollWidth - carousel.clientWidth - 8;
+
+            carousel.scrollTo({
+                left: atEnd ? 0 : carousel.scrollLeft + step,
+                behavior: 'smooth',
+            });
+        }, 3800);
+
+        return () => window.clearInterval(timer);
+    }, [certificateCarouselPaused, certificates.length, reduceMotion]);
     const projectCounts = useMemo(
         () =>
             projects.reduce<Record<string, number>>(
@@ -1455,9 +1491,34 @@ export default function Portfolio({
                             copy="Verified certificates and credentials managed from the private portfolio CMS."
                         />
                         {certificates.length > 0 ? (
-                            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                            <div
+                                ref={certificateCarouselRef}
+                                className="flex snap-x snap-mandatory [scrollbar-width:none] gap-5 overflow-x-auto scroll-smooth pb-3 [&::-webkit-scrollbar]:hidden"
+                                onMouseEnter={() =>
+                                    setCertificateCarouselPaused(true)
+                                }
+                                onMouseLeave={() =>
+                                    setCertificateCarouselPaused(false)
+                                }
+                                onFocusCapture={() =>
+                                    setCertificateCarouselPaused(true)
+                                }
+                                onBlurCapture={(event) => {
+                                    if (
+                                        !event.currentTarget.contains(
+                                            event.relatedTarget,
+                                        )
+                                    ) {
+                                        setCertificateCarouselPaused(false);
+                                    }
+                                }}
+                                aria-label="Certificate carousel"
+                            >
                                 {certificates.map((item) => (
-                                    <Reveal key={item.id} className="h-full">
+                                    <Reveal
+                                        key={item.id}
+                                        className={`h-auto w-[88%] shrink-0 snap-start sm:w-[72%] ${certificates.length === 2 ? 'md:w-[60%]' : 'md:w-[calc((100%_-_1.25rem)/2)] lg:w-[calc((100%_-_2.5rem)/3)]'}`}
+                                    >
                                         <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[.03] transition hover:-translate-y-1 hover:border-violet-400/30">
                                             {item.image &&
                                             !isPdfPath(item.image) ? (
