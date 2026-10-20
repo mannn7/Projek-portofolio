@@ -198,6 +198,14 @@ class PortfolioDashboardController extends Controller
             default => abort(404),
         };
 
+        // Existing media URLs can be present in older CMS form payloads. They
+        // mean "keep the current file" and must not be validated as uploads.
+        foreach (['photo', 'cv_file', 'image'] as $field) {
+            if (array_key_exists($field, $rules) && ! $request->hasFile($field)) {
+                $request->request->remove($field);
+            }
+        }
+
         $data = $request->validate($rules);
         foreach (['available_for_work', 'is_featured', 'is_published', 'is_active'] as $field) {
             if (array_key_exists($field, $rules)) {

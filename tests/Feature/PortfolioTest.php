@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ContactMessage;
+use App\Models\Certificate;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -200,6 +201,36 @@ class PortfolioTest extends TestCase
             'name' => 'Verified Certificate',
             'is_active' => true,
         ]);
+    }
+
+    public function test_admin_can_edit_certificate_without_uploading_its_image_again(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('certificates/existing.jpg', 'existing certificate');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $certificate = Certificate::query()->create([
+            'name' => 'Existing Certificate',
+            'issuer' => 'BNSP',
+            'image' => 'certificates/existing.jpg',
+            'sort_order' => 0,
+            'is_active' => true,
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.update', ['resource' => 'certificates', 'id' => $certificate->id]), [
+                'name' => 'Updated Certificate',
+                'issuer' => 'BNSP',
+                'image' => 'certificates/existing.jpg',
+                'sort_order' => 5,
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $certificate->refresh();
+        $this->assertSame('Updated Certificate', $certificate->name);
+        $this->assertSame('certificates/existing.jpg', $certificate->image);
+        Storage::disk('public')->assertExists('certificates/existing.jpg');
     }
 
     public function test_public_contact_form_stores_a_valid_message(): void

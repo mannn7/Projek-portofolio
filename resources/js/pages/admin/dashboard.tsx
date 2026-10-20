@@ -180,6 +180,12 @@ function Editor({
         technologies: Array.isArray(initial.technologies)
             ? initial.technologies.join(', ')
             : (initial.technologies ?? ''),
+        // Existing media paths are previews, not new browser uploads. Keeping
+        // them in form data makes Laravel validate a string as an image/file.
+        photo: null,
+        cv_file: null,
+        image: null,
+        gallery: [],
     };
     const { data, setData, post, processing, errors } =
         useForm<RecordData>(normalized);
