@@ -116,6 +116,25 @@ class PortfolioDashboardController extends Controller
         return back()->with('success', 'Project screenshot deleted.');
     }
 
+    public function destroyCertificateFile(Certificate $certificate, int $index): RedirectResponse
+    {
+        $files = array_values(array_unique(array_filter([
+            $certificate->image,
+            ...($certificate->files ?? []),
+        ])));
+        abort_unless(array_key_exists($index, $files), 404);
+
+        $removedFile = $files[$index];
+        array_splice($files, $index, 1);
+        $certificate->update([
+            'image' => $files[0] ?? null,
+            'files' => $files,
+        ]);
+        Storage::disk('public')->delete($removedFile);
+
+        return back()->with('success', 'Certificate file deleted.');
+    }
+
     public function markMessageRead(ContactMessage $contactMessage): RedirectResponse
     {
         $contactMessage->update([

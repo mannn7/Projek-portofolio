@@ -232,6 +232,18 @@ function Editor({
         setData(name, selected);
         setGalleryPreviews(selected.map((file) => URL.createObjectURL(file)));
     };
+    const removeSelectedCertificateFile = (index: number) => {
+        URL.revokeObjectURL(galleryPreviews[index]);
+        setData(
+            'files',
+            (data.files as File[]).filter(
+                (_, fileIndex) => fileIndex !== index,
+            ),
+        );
+        setGalleryPreviews((current) =>
+            current.filter((_, fileIndex) => fileIndex !== index),
+        );
+    };
     const certificateFiles = Array.from(
         new Set(
             [initial.image, ...(initial.files ?? [])].filter(
@@ -392,32 +404,57 @@ function Editor({
                             {type === 'certfiles' && (
                                 <div className="mb-4 grid gap-3 sm:grid-cols-2">
                                     {certificateFiles.map((path, index) => (
-                                        <a
+                                        <div
                                             key={path}
-                                            href={mediaUrl(path)}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="aspect-[1.414/1] overflow-hidden rounded-xl border border-white/10 bg-white"
+                                            className="group/file relative aspect-[1.414/1] overflow-hidden rounded-xl border border-white/10 bg-white"
                                         >
-                                            {isPdfPath(path) ? (
-                                                <PdfThumbnail
-                                                    src={mediaUrl(path)!}
-                                                    title={`Certificate file ${index + 1}`}
-                                                    className="h-full w-full"
-                                                />
-                                            ) : (
-                                                <img
-                                                    src={mediaUrl(path)}
-                                                    alt={`Certificate file ${index + 1}`}
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            )}
-                                        </a>
+                                            <a
+                                                href={mediaUrl(path)}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="block h-full w-full"
+                                            >
+                                                {isPdfPath(path) ? (
+                                                    <PdfThumbnail
+                                                        src={mediaUrl(path)!}
+                                                        title={`Certificate file ${index + 1}`}
+                                                        className="h-full w-full"
+                                                    />
+                                                ) : (
+                                                    <img
+                                                        src={mediaUrl(path)}
+                                                        alt={`Certificate file ${index + 1}`}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                )}
+                                            </a>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    router.delete(
+                                                        `/admin/certificates/${initial.id}/files/${index}`,
+                                                        {
+                                                            preserveScroll: true,
+                                                            onSuccess: () => {
+                                                                toast.success(
+                                                                    'Certificate file deleted.',
+                                                                );
+                                                                onDone();
+                                                            },
+                                                        },
+                                                    )
+                                                }
+                                                className="absolute top-2 right-2 rounded-lg bg-black/80 p-2 text-rose-300 opacity-100 shadow-lg transition hover:bg-rose-500 hover:text-white focus:opacity-100 sm:opacity-0 sm:group-hover/file:opacity-100"
+                                                aria-label={`Delete certificate file ${index + 1}`}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     ))}
                                     {galleryPreviews.map((preview, index) => (
                                         <div
                                             key={preview}
-                                            className="aspect-[1.414/1] overflow-hidden rounded-xl border border-violet-400/20 bg-white"
+                                            className="group/file relative aspect-[1.414/1] overflow-hidden rounded-xl border border-violet-400/20 bg-white"
                                         >
                                             {data.files[index]?.type ===
                                             'application/pdf' ? (
@@ -433,6 +470,18 @@ function Editor({
                                                     className="h-full w-full object-cover"
                                                 />
                                             )}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeSelectedCertificateFile(
+                                                        index,
+                                                    )
+                                                }
+                                                className="absolute top-2 right-2 rounded-lg bg-black/80 p-2 text-rose-300 opacity-100 shadow-lg transition hover:bg-rose-500 hover:text-white focus:opacity-100 sm:opacity-0 sm:group-hover/file:opacity-100"
+                                                aria-label={`Remove new certificate file ${index + 1}`}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
