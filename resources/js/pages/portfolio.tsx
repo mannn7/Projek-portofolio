@@ -727,20 +727,96 @@ export default function Portfolio({
                 </AnimatePresence>
             </header>
 
-            <main id="main-content" tabIndex={-1}>
+            <main
+                key={showIntro ? 'intro-active' : 'intro-complete'}
+                id="main-content"
+                tabIndex={-1}
+            >
                 <section className="relative min-h-screen overflow-hidden pt-20">
-                    <div
+                    <motion.div
                         aria-hidden="true"
                         className="absolute top-16 left-[55%] h-[34rem] w-[34rem] rounded-full bg-violet-600/20 blur-[140px]"
+                        animate={
+                            reduceMotion
+                                ? undefined
+                                : {
+                                      x: [0, 90, -25, 0],
+                                      y: [0, 45, 80, 0],
+                                      scale: [1, 1.18, 0.92, 1],
+                                  }
+                        }
+                        transition={{
+                            duration: 14,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                        }}
                     />
-                    <div
+                    <motion.div
                         aria-hidden="true"
                         className="absolute bottom-0 -left-32 h-80 w-80 rounded-full bg-cyan-600/10 blur-[120px]"
+                        animate={
+                            reduceMotion
+                                ? undefined
+                                : {
+                                      x: [0, 120, 40, 0],
+                                      y: [0, -45, -90, 0],
+                                      scale: [1, 1.25, 1.05, 1],
+                                  }
+                        }
+                        transition={{
+                            duration: 16,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                        }}
                     />
-                    <div
+                    <motion.div
                         aria-hidden="true"
                         className="portfolio-grid absolute inset-0 opacity-30"
+                        animate={
+                            reduceMotion
+                                ? undefined
+                                : {
+                                      backgroundPosition: [
+                                          '0px 0px',
+                                          '56px 56px',
+                                      ],
+                                  }
+                        }
+                        transition={{
+                            duration: 12,
+                            repeat: Infinity,
+                            ease: 'linear',
+                        }}
                     />
+                    {Array.from({ length: 12 }).map((_, index) => (
+                        <motion.span
+                            key={index}
+                            aria-hidden="true"
+                            className="absolute hidden h-px w-16 bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent sm:block"
+                            style={{
+                                top: `${14 + ((index * 19) % 72)}%`,
+                                left: `${4 + ((index * 23) % 88)}%`,
+                                rotate: '-28deg',
+                            }}
+                            initial={{ opacity: 0, x: -30, y: 18 }}
+                            animate={
+                                reduceMotion
+                                    ? undefined
+                                    : {
+                                          opacity: [0, 0.8, 0],
+                                          x: [-30, 80],
+                                          y: [18, -35],
+                                      }
+                            }
+                            transition={{
+                                duration: 2.4 + (index % 4) * 0.5,
+                                delay: index * 0.45,
+                                repeat: Infinity,
+                                repeatDelay: 2.5 + (index % 3),
+                                ease: 'easeOut',
+                            }}
+                        />
+                    ))}
                     <div className="relative mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl items-center gap-14 px-5 py-20 lg:grid-cols-[1.1fr_.9fr] lg:px-8">
                         <div>
                             <Reveal>
@@ -760,9 +836,27 @@ export default function Portfolio({
                                 </p>
                                 <h1 className="max-w-4xl text-5xl leading-[.98] font-black tracking-[-.055em] text-white sm:text-7xl lg:text-[5.7rem]">
                                     I build digital products that feel{' '}
-                                    <span className="bg-gradient-to-r from-violet-400 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+                                    <motion.span
+                                        className="bg-gradient-to-r from-violet-400 via-fuchsia-300 to-cyan-300 bg-[length:220%_100%] bg-clip-text text-transparent"
+                                        animate={
+                                            reduceMotion
+                                                ? undefined
+                                                : {
+                                                      backgroundPosition: [
+                                                          '0% 50%',
+                                                          '100% 50%',
+                                                          '0% 50%',
+                                                      ],
+                                                  }
+                                        }
+                                        transition={{
+                                            duration: 6,
+                                            repeat: Infinity,
+                                            ease: 'easeInOut',
+                                        }}
+                                    >
                                         effortless.
-                                    </span>
+                                    </motion.span>
                                 </h1>
                             </Reveal>
                             <Reveal delay={0.16}>
@@ -834,7 +928,27 @@ export default function Portfolio({
                                     </motion.div>
                                 );
                             })}
-                            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#101522] p-4 shadow-2xl shadow-black/50">
+                            <motion.div
+                                className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#101522] p-4 shadow-2xl shadow-black/50"
+                                animate={
+                                    reduceMotion
+                                        ? undefined
+                                        : {
+                                              y: [0, -10, 0],
+                                              rotate: [0, 0.6, 0, -0.5, 0],
+                                          }
+                                }
+                                transition={{
+                                    duration: 7,
+                                    repeat: Infinity,
+                                    ease: 'easeInOut',
+                                }}
+                                whileHover={
+                                    reduceMotion
+                                        ? undefined
+                                        : { scale: 1.015, rotate: 0 }
+                                }
+                            >
                                 <div className="aspect-[4/5] overflow-hidden rounded-[1.4rem] bg-gradient-to-br from-violet-950 to-slate-950">
                                     {profile.photo ? (
                                         <img
@@ -857,6 +971,22 @@ export default function Portfolio({
                                             </p>
                                         </div>
                                     )}
+                                    <motion.div
+                                        aria-hidden="true"
+                                        className="absolute inset-y-4 w-24 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent blur-sm"
+                                        animate={
+                                            reduceMotion
+                                                ? undefined
+                                                : { x: [-180, 520] }
+                                        }
+                                        transition={{
+                                            duration: 2.2,
+                                            delay: 1.5,
+                                            repeat: Infinity,
+                                            repeatDelay: 5,
+                                            ease: 'easeInOut',
+                                        }}
+                                    />
                                 </div>
                                 <div className="flex items-center justify-between px-2 pt-5 pb-1">
                                     <div>
@@ -868,11 +998,47 @@ export default function Portfolio({
                                             {profile.location}
                                         </p>
                                     </div>
-                                    <Sparkles className="text-violet-400" />
+                                    <motion.div
+                                        animate={
+                                            reduceMotion
+                                                ? undefined
+                                                : {
+                                                      rotate: [0, 14, -10, 0],
+                                                      scale: [1, 1.18, 1],
+                                                  }
+                                        }
+                                        transition={{
+                                            duration: 3,
+                                            repeat: Infinity,
+                                            ease: 'easeInOut',
+                                        }}
+                                    >
+                                        <Sparkles className="text-violet-400" />
+                                    </motion.div>
                                 </div>
-                            </div>
+                            </motion.div>
                         </Reveal>
                     </div>
+                    <motion.a
+                        href="#about"
+                        className="absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 font-mono text-[9px] tracking-[.22em] text-slate-500 uppercase transition hover:text-cyan-300 lg:flex"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.1, duration: 0.6 }}
+                    >
+                        Scroll to explore
+                        <motion.span
+                            animate={
+                                reduceMotion ? undefined : { y: [0, 6, 0] }
+                            }
+                            transition={{
+                                duration: 1.8,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                            }}
+                            className="h-8 w-px bg-gradient-to-b from-violet-400 to-transparent"
+                        />
+                    </motion.a>
                 </section>
 
                 <section
