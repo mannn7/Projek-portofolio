@@ -1,5 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import {
+    AnimatePresence,
+    motion,
+    useReducedMotion,
+    useScroll,
+    useSpring,
+} from 'motion/react';
 import {
     ArrowDownRight,
     ArrowUpRight,
@@ -503,6 +509,27 @@ function Reveal({
     );
 }
 
+function SectionAura({ side = 'right' }: { side?: 'left' | 'right' }) {
+    const reduceMotion = useReducedMotion();
+
+    return (
+        <motion.div
+            aria-hidden="true"
+            className={`pointer-events-none absolute top-1/2 h-80 w-80 -translate-y-1/2 rounded-full blur-[130px] ${side === 'right' ? '-right-32 bg-violet-600/15' : '-left-32 bg-cyan-500/10'}`}
+            animate={
+                reduceMotion
+                    ? undefined
+                    : {
+                          y: ['-50%', '-68%', '-35%', '-50%'],
+                          scale: [1, 1.25, 0.9, 1],
+                          opacity: [0.45, 0.8, 0.5, 0.45],
+                      }
+            }
+            transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
+        />
+    );
+}
+
 function Heading({
     eyebrow,
     title,
@@ -568,6 +595,12 @@ export default function Portfolio({
     const reduceMotion = useReducedMotion();
     const [showIntro, setShowIntro] = useState(true);
     const completeIntro = useCallback(() => setShowIntro(false), []);
+    const { scrollYProgress } = useScroll();
+    const smoothScrollProgress = useSpring(scrollYProgress, {
+        stiffness: 110,
+        damping: 28,
+        restDelta: 0.001,
+    });
     const profile = {
         ...defaults,
         ...storedProfile,
@@ -641,6 +674,11 @@ export default function Portfolio({
             <AnimatePresence>
                 {showIntro && <PortfolioIntro onComplete={completeIntro} />}
             </AnimatePresence>
+            <motion.div
+                aria-hidden="true"
+                className="fixed top-20 right-0 left-0 z-50 h-px origin-left bg-gradient-to-r from-violet-500 via-fuchsia-400 to-cyan-300 shadow-[0_0_12px_rgba(34,211,238,.75)]"
+                style={{ scaleX: smoothScrollProgress }}
+            />
             <Head title={seo.title}>
                 <meta name="description" content={seo.description} />
                 <link rel="canonical" href={seo.canonical} />
@@ -1058,8 +1096,12 @@ export default function Portfolio({
                         ))}
                     </div>
                 </section>
-                <section id="about" className="scroll-mt-24 px-5 py-28 lg:px-8">
-                    <div className="mx-auto max-w-7xl">
+                <section
+                    id="about"
+                    className="relative scroll-mt-24 overflow-hidden px-5 py-28 lg:px-8"
+                >
+                    <SectionAura side="right" />
+                    <div className="relative mx-auto max-w-7xl">
                         <Heading
                             eyebrow="01 / About"
                             title="Engineering with intent."
@@ -1080,18 +1122,37 @@ export default function Portfolio({
                                         'Built to last',
                                         'Accessible, responsive systems that stay pleasant to maintain.',
                                     ],
-                                ].map(([title, copy]) => (
-                                    <div
+                                ].map(([title, copy], index) => (
+                                    <motion.div
                                         key={title}
-                                        className="bg-[#0b0e17] p-8"
+                                        className="group relative overflow-hidden bg-[#0b0e17] p-8"
+                                        whileHover={
+                                            reduceMotion ? undefined : { y: -7 }
+                                        }
+                                        transition={{
+                                            type: 'spring',
+                                            stiffness: 280,
+                                            damping: 22,
+                                        }}
                                     >
+                                        <motion.span
+                                            aria-hidden="true"
+                                            className="absolute top-0 left-0 h-px w-full origin-left bg-gradient-to-r from-violet-400 to-cyan-300"
+                                            initial={{ scaleX: 0 }}
+                                            whileInView={{ scaleX: 1 }}
+                                            viewport={{ once: true }}
+                                            transition={{
+                                                duration: 0.8,
+                                                delay: index * 0.12,
+                                            }}
+                                        />
                                         <p className="text-xl font-semibold text-white">
                                             {title}
                                         </p>
                                         <p className="mt-3 leading-7 text-slate-400">
                                             {copy}
                                         </p>
-                                    </div>
+                                    </motion.div>
                                 ))}
                             </div>
                         </Reveal>
@@ -1099,9 +1160,10 @@ export default function Portfolio({
                 </section>
                 <section
                     id="experience"
-                    className="content-auto scroll-mt-24 bg-white/[.02] px-5 py-28 lg:px-8"
+                    className="content-auto relative scroll-mt-24 overflow-hidden bg-white/[.02] px-5 py-28 lg:px-8"
                 >
-                    <div className="mx-auto max-w-7xl">
+                    <SectionAura side="left" />
+                    <div className="relative mx-auto max-w-7xl">
                         <Heading
                             eyebrow="02 / Experience"
                             title="Where I’ve contributed."
@@ -1115,7 +1177,22 @@ export default function Portfolio({
                                         delay={index * 0.06}
                                         className="relative grid gap-4 border-b border-white/[.07] py-8 pl-8 md:grid-cols-[.35fr_1fr]"
                                     >
-                                        <span className="absolute top-10 -left-1.5 size-3 rounded-full border-2 border-[#090c14] bg-violet-400" />
+                                        <motion.span
+                                            className="absolute top-10 -left-1.5 size-3 rounded-full border-2 border-[#090c14] bg-violet-400 shadow-[0_0_14px_rgba(167,139,250,.8)]"
+                                            animate={
+                                                reduceMotion
+                                                    ? undefined
+                                                    : {
+                                                          scale: [1, 1.45, 1],
+                                                          opacity: [1, 0.7, 1],
+                                                      }
+                                            }
+                                            transition={{
+                                                duration: 2.2,
+                                                delay: index * 0.25,
+                                                repeat: Infinity,
+                                            }}
+                                        />
                                         <p className="font-mono text-xs text-violet-300">
                                             {formatDate(item.started_at)} —{' '}
                                             {formatDate(item.ended_at)}
@@ -1162,9 +1239,10 @@ export default function Portfolio({
                 </section>
                 <section
                     id="skills"
-                    className="scroll-mt-24 px-5 py-28 lg:px-8"
+                    className="relative scroll-mt-24 overflow-hidden px-5 py-28 lg:px-8"
                 >
-                    <div className="mx-auto max-w-7xl">
+                    <SectionAura side="right" />
+                    <div className="relative mx-auto max-w-7xl">
                         <Heading
                             eyebrow="03 / Capabilities"
                             title="Tools for the whole stack."
@@ -1177,7 +1255,7 @@ export default function Portfolio({
                                         <Reveal
                                             key={group}
                                             delay={index * 0.06}
-                                            className="rounded-3xl border border-white/10 bg-white/[.035] p-7"
+                                            className="rounded-3xl border border-white/10 bg-white/[.035] p-7 transition duration-300 hover:-translate-y-2 hover:border-violet-400/30 hover:bg-violet-500/[.06] hover:shadow-[0_24px_80px_rgba(76,29,149,.18)]"
                                         >
                                             <p className="font-mono text-xs tracking-[.2em] text-violet-400 uppercase">
                                                 {group}
@@ -1230,9 +1308,10 @@ export default function Portfolio({
                 </section>
                 <section
                     id="projects"
-                    className="scroll-mt-24 bg-[#0a0d16] px-5 py-28 lg:px-8"
+                    className="relative scroll-mt-24 overflow-hidden bg-[#0a0d16] px-5 py-28 lg:px-8"
                 >
-                    <div className="mx-auto max-w-7xl">
+                    <SectionAura side="left" />
+                    <div className="relative mx-auto max-w-7xl">
                         <Heading
                             eyebrow="04 / Selected work"
                             title="Projects, up close."
@@ -1268,7 +1347,7 @@ export default function Portfolio({
                         >
                             {visibleProjects.map((project, index) => (
                                 <Reveal key={project.id} delay={index * 0.05}>
-                                    <article className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[.035]">
+                                    <article className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[.035] transition duration-500 hover:-translate-y-2 hover:border-violet-400/30 hover:shadow-[0_28px_90px_rgba(76,29,149,.2)]">
                                         <Link
                                             href={`/projects/${project.slug}`}
                                             className="block"
@@ -1363,9 +1442,10 @@ export default function Portfolio({
                 </section>
                 <section
                     id="certificates"
-                    className="content-auto scroll-mt-24 px-5 py-28 lg:px-8"
+                    className="content-auto relative scroll-mt-24 overflow-hidden px-5 py-28 lg:px-8"
                 >
-                    <div className="mx-auto max-w-7xl">
+                    <SectionAura side="right" />
+                    <div className="relative mx-auto max-w-7xl">
                         <Heading
                             eyebrow="05 / Certificates"
                             title="Continuous learning."
