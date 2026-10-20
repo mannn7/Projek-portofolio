@@ -11,6 +11,8 @@ import {
     ArrowUpRight,
     Award,
     BriefcaseBusiness,
+    ChevronLeft,
+    ChevronRight,
     Code2,
     Download,
     Github,
@@ -591,6 +593,7 @@ function TechMark({
 function CertificateMedia({ certificate }: { certificate: Certificate }) {
     const reduceMotion = useReducedMotion();
     const [activeFile, setActiveFile] = useState(0);
+    const [direction, setDirection] = useState(1);
     const [paused, setPaused] = useState(false);
     const files = Array.from(
         new Set(
@@ -602,12 +605,24 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
 
     useEffect(() => {
         if (files.length < 2 || paused || reduceMotion) return;
-        const timer = window.setInterval(
-            () => setActiveFile((current) => (current + 1) % files.length),
-            3800,
+        const timer = window.setTimeout(() => {
+            setDirection(1);
+            setActiveFile((current) => (current + 1) % files.length);
+        }, 4600);
+        return () => window.clearTimeout(timer);
+    }, [activeFile, files.length, paused, reduceMotion]);
+
+    const showFile = (index: number) => {
+        setDirection(index > activeFile ? 1 : -1);
+        setActiveFile(index);
+    };
+
+    const moveFile = (step: -1 | 1) => {
+        setDirection(step);
+        setActiveFile(
+            (current) => (current + step + files.length) % files.length,
         );
-        return () => window.clearInterval(timer);
-    }, [files.length, paused, reduceMotion]);
+    };
 
     const currentFile = files[activeFile];
     if (!currentFile) {
@@ -624,9 +639,11 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
 
     return (
         <div
-            className="relative aspect-[1.414/1] overflow-hidden bg-white"
+            className="group/certificate relative isolate aspect-[1.414/1] overflow-hidden bg-slate-100"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
+            onFocusCapture={() => setPaused(true)}
+            onBlurCapture={() => setPaused(false)}
         >
             <a
                 href={asset(currentFile)}
@@ -635,13 +652,46 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
                 className="group/media absolute inset-0 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
                 aria-label={`Open certificate ${certificate.name}, file ${activeFile + 1} of ${files.length}`}
             >
-                <AnimatePresence mode="wait">
+                <AnimatePresence
+                    initial={false}
+                    custom={direction}
+                    mode="popLayout"
+                >
                     <motion.div
                         key={currentFile}
-                        initial={reduceMotion ? false : { opacity: 0, x: 22 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={reduceMotion ? undefined : { opacity: 0, x: -22 }}
-                        transition={{ duration: 0.45 }}
+                        custom={direction}
+                        initial={
+                            reduceMotion
+                                ? false
+                                : {
+                                      opacity: 0,
+                                      x: direction * 46,
+                                      scale: 1.035,
+                                      filter: 'blur(5px)',
+                                  }
+                        }
+                        animate={{
+                            opacity: 1,
+                            x: 0,
+                            scale: 1,
+                            filter: 'blur(0px)',
+                        }}
+                        exit={
+                            reduceMotion
+                                ? undefined
+                                : {
+                                      opacity: 0,
+                                      x: direction * -30,
+                                      scale: 0.985,
+                                      filter: 'blur(3px)',
+                                  }
+                        }
+                        transition={{
+                            x: { type: 'spring', stiffness: 170, damping: 24 },
+                            opacity: { duration: 0.42, ease: 'easeOut' },
+                            scale: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+                            filter: { duration: 0.35 },
+                        }}
                         className="absolute inset-0"
                     >
                         {isPdfPath(currentFile) ? (
@@ -659,22 +709,64 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
                         )}
                     </motion.div>
                 </AnimatePresence>
+                <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-white/5 opacity-0 transition duration-500 group-hover/media:opacity-100" />
                 <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-hover/media:opacity-100 group-focus-visible/media:opacity-100">
                     Click to view certificate
                 </span>
             </a>
             {files.length > 1 && (
-                <div className="absolute top-3 right-3 z-10 flex gap-1.5 rounded-full bg-slate-950/70 p-2 backdrop-blur">
-                    {files.map((file, index) => (
-                        <button
-                            key={file}
-                            type="button"
-                            onClick={() => setActiveFile(index)}
-                            className={`size-2 rounded-full transition ${index === activeFile ? 'bg-white' : 'bg-white/35 hover:bg-white/70'}`}
-                            aria-label={`Show certificate file ${index + 1}`}
-                        />
-                    ))}
-                </div>
+                <>
+                    <div className="absolute top-3 right-3 z-10 rounded-full border border-white/15 bg-slate-950/70 px-3 py-1.5 font-mono text-[10px] tracking-[0.16em] text-white shadow-lg backdrop-blur-xl">
+                        {String(activeFile + 1).padStart(2, '0')} /{' '}
+                        {String(files.length).padStart(2, '0')}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => moveFile(-1)}
+                        className="absolute top-1/2 left-3 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-slate-950/65 text-white opacity-0 shadow-xl backdrop-blur-xl transition duration-300 group-hover/certificate:opacity-100 hover:scale-105 hover:bg-violet-600 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-violet-400"
+                        aria-label="Show previous certificate file"
+                    >
+                        <ChevronLeft size={17} aria-hidden="true" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => moveFile(1)}
+                        className="absolute top-1/2 right-3 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-slate-950/65 text-white opacity-0 shadow-xl backdrop-blur-xl transition duration-300 group-hover/certificate:opacity-100 hover:scale-105 hover:bg-violet-600 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-violet-400"
+                        aria-label="Show next certificate file"
+                    >
+                        <ChevronRight size={17} aria-hidden="true" />
+                    </button>
+                    <div className="absolute inset-x-0 bottom-0 z-10 flex h-1 bg-slate-950/15">
+                        {files.map((file, index) => (
+                            <button
+                                key={file}
+                                type="button"
+                                onClick={() => showFile(index)}
+                                className="relative h-full flex-1 overflow-hidden bg-white/20"
+                                aria-label={`Show certificate file ${index + 1}`}
+                                aria-current={
+                                    index === activeFile ? 'true' : undefined
+                                }
+                            >
+                                {index === activeFile && (
+                                    <motion.span
+                                        key={`${activeFile}-${paused}`}
+                                        className="absolute inset-0 origin-left bg-gradient-to-r from-violet-500 via-fuchsia-400 to-cyan-400"
+                                        initial={{ scaleX: 0 }}
+                                        animate={{
+                                            scaleX:
+                                                paused || reduceMotion ? 0 : 1,
+                                        }}
+                                        transition={{
+                                            duration: 4.6,
+                                            ease: 'linear',
+                                        }}
+                                    />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </>
             )}
         </div>
     );
