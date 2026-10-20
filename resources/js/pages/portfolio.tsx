@@ -274,6 +274,22 @@ export default function Portfolio({
         [projects],
     );
     const [category, setCategory] = useState('All');
+    const projectCounts = useMemo(
+        () =>
+            projects.reduce<Record<string, number>>(
+                (counts, project) => {
+                    counts.All += 1;
+                    if (project.category) {
+                        counts[project.category] =
+                            (counts[project.category] ?? 0) + 1;
+                    }
+
+                    return counts;
+                },
+                { All: 0 },
+            ),
+        [projects],
+    );
     const visibleProjects =
         category === 'All'
             ? projects
@@ -751,9 +767,14 @@ export default function Portfolio({
                                         type="button"
                                         onClick={() => setCategory(item)}
                                         aria-pressed={category === item}
-                                        className={`rounded-full px-4 py-2 text-sm transition ${category === item ? 'bg-violet-500 text-white' : 'border border-white/10 text-slate-400 hover:text-white'}`}
+                                        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${category === item ? 'bg-violet-500 text-white' : 'border border-white/10 text-slate-400 hover:border-white/20 hover:text-white'}`}
                                     >
                                         {item}
+                                        <span
+                                            className={`rounded-full px-1.5 py-0.5 text-[10px] ${category === item ? 'bg-white/15 text-white' : 'bg-white/[.06] text-slate-500'}`}
+                                        >
+                                            {projectCounts[item] ?? 0}
+                                        </span>
                                     </button>
                                 ))}
                             </div>
@@ -769,7 +790,12 @@ export default function Portfolio({
                                             href={`/projects/${project.slug}`}
                                             className="block"
                                         >
-                                            <div className="aspect-[16/10] overflow-hidden bg-gradient-to-br from-violet-950 to-slate-950">
+                                            <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-violet-950 to-slate-950">
+                                                {project.is_featured && (
+                                                    <span className="absolute z-10 m-4 rounded-full border border-white/15 bg-slate-950/75 px-3 py-1 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase backdrop-blur-md">
+                                                        Featured
+                                                    </span>
+                                                )}
                                                 {project.image ? (
                                                     <img
                                                         src={asset(
@@ -823,6 +849,21 @@ export default function Portfolio({
                                 </Reveal>
                             ))}
                         </motion.div>
+                        {projects.length > 0 &&
+                            visibleProjects.length === 0 && (
+                                <div className="rounded-3xl border border-dashed border-white/15 p-14 text-center">
+                                    <p className="text-slate-400">
+                                        No projects found in this category.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCategory('All')}
+                                        className="mt-4 text-sm font-semibold text-violet-300 hover:text-white"
+                                    >
+                                        View all projects
+                                    </button>
+                                </div>
+                            )}
                         {projects.length === 0 && (
                             <div className="rounded-3xl border border-dashed border-white/15 p-14 text-center">
                                 <BriefcaseBusiness

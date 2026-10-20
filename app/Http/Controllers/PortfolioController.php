@@ -58,6 +58,29 @@ class PortfolioController extends Controller
         abort_unless($project->is_published, 404);
 
         $project->load('images');
+        $relatedProjects = Project::query()
+            ->with('images')
+            ->where('is_published', true)
+            ->whereKeyNot($project->getKey())
+            ->when($project->category, fn ($query) => $query->where('category', $project->category))
+            ->orderByDesc('is_featured')
+            ->orderBy('sort_order')
+            ->limit(3)
+            ->get();
+
+        if ($relatedProjects->count() < 3) {
+            $relatedProjects = $relatedProjects->concat(
+                Project::query()
+                    ->with('images')
+                    ->where('is_published', true)
+                    ->whereKeyNot($project->getKey())
+                    ->whereNotIn('id', $relatedProjects->modelKeys())
+                    ->orderByDesc('is_featured')
+                    ->orderBy('sort_order')
+                    ->limit(3 - $relatedProjects->count())
+                    ->get()
+            );
+        }
         $description = str($project->description ?: $project->content ?: $project->title)
             ->squish()
             ->limit(155, '')
@@ -65,12 +88,7 @@ class PortfolioController extends Controller
 
         return Inertia::render('projects/show', [
             'project' => $project,
-            'relatedProjects' => Project::query()
-                ->where('is_published', true)
-                ->whereKeyNot($project->getKey())
-                ->when($project->category, fn ($query) => $query->where('category', $project->category))
-                ->limit(3)
-                ->get(),
+            'relatedProjects' => $relatedProjects->values(),
             'seo' => [
                 'title' => "{$project->title} — FA.DEV",
                 'description' => $description,

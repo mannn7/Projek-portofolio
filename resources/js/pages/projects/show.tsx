@@ -2,6 +2,8 @@ import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
     ArrowUpRight,
+    ChevronLeft,
+    ChevronRight,
     Code2,
     ExternalLink,
     Github,
@@ -11,11 +13,12 @@ import {
     TrendingUp,
     UserRound,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import type { SeoData } from '@/types/seo';
 
 type ProjectImage = { id: number; path: string; alt_text?: string };
+type PreviewImage = { key: string; path: string; alt: string };
 
 type Project = {
     id: number;
@@ -34,6 +37,14 @@ type Project = {
     demo_url?: string;
     images?: ProjectImage[];
 };
+
+const asset = (path?: string) => {
+    if (!path) return undefined;
+    if (/^https?:\/\//.test(path) || path.startsWith('/')) return path;
+
+    return `/storage/${path}`;
+};
+
 export default function ProjectShow({
     project,
     relatedProjects,
@@ -43,9 +54,42 @@ export default function ProjectShow({
     relatedProjects: Project[];
     seo: SeoData;
 }) {
-    const [selectedImage, setSelectedImage] = useState<ProjectImage | null>(
+    const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
         null,
     );
+    const previewImages = useMemo<PreviewImage[]>(
+        () => [
+            ...(project.image
+                ? [
+                      {
+                          key: 'cover',
+                          path: project.image,
+                          alt: `Cover screenshot of ${project.title}`,
+                      },
+                  ]
+                : []),
+            ...(project.images ?? []).map((image, index) => ({
+                key: `gallery-${image.id}`,
+                path: image.path,
+                alt:
+                    image.alt_text ||
+                    `${project.title} screenshot ${index + 1}`,
+            })),
+        ],
+        [project.image, project.images, project.title],
+    );
+    const selectedImage =
+        selectedImageIndex === null ? null : previewImages[selectedImageIndex];
+    const showPreviousImage = () =>
+        setSelectedImageIndex((current) =>
+            current === null
+                ? null
+                : (current - 1 + previewImages.length) % previewImages.length,
+        );
+    const showNextImage = () =>
+        setSelectedImageIndex((current) =>
+            current === null ? null : (current + 1) % previewImages.length,
+        );
     const caseStudy = [
         { label: 'The problem', value: project.problem, icon: Target },
         { label: 'The solution', value: project.solution, icon: Lightbulb },
@@ -133,13 +177,24 @@ export default function ProjectShow({
                         )}
                     </div>
                     {project.image ? (
-                        <img
-                            src={`/storage/${project.image}`}
-                            alt={`Screenshot of ${project.title}`}
-                            fetchPriority="high"
-                            decoding="async"
-                            className="mt-14 aspect-video w-full rounded-3xl border border-white/10 object-cover"
-                        />
+                        <button
+                            type="button"
+                            onClick={() => setSelectedImageIndex(0)}
+                            className="group relative mt-14 block aspect-video w-full cursor-zoom-in overflow-hidden rounded-3xl border border-white/10 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-400"
+                            aria-label={`Preview cover screenshot of ${project.title}`}
+                        >
+                            <img
+                                src={asset(project.image)}
+                                alt={`Screenshot of ${project.title}`}
+                                fetchPriority="high"
+                                decoding="async"
+                                className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.015]"
+                            />
+                            <span className="absolute right-5 bottom-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-950/80 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md">
+                                <Images size={16} aria-hidden="true" />
+                                View full image
+                            </span>
+                        </button>
                     ) : (
                         <div className="mt-14 flex aspect-video items-center justify-center rounded-3xl border border-white/10 bg-gradient-to-br from-violet-950 to-slate-950">
                             <Code2 size={64} className="text-violet-400" />
@@ -208,11 +263,15 @@ export default function ProjectShow({
                                     <button
                                         key={image.id}
                                         type="button"
-                                        onClick={() => setSelectedImage(image)}
-                                        className={`group overflow-hidden rounded-3xl border border-white/10 bg-white/[.03] text-left ${index === 0 && project.images!.length % 2 === 1 ? 'md:col-span-2' : ''}`}
+                                        onClick={() =>
+                                            setSelectedImageIndex(
+                                                index + (project.image ? 1 : 0),
+                                            )
+                                        }
+                                        className={`group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[.03] text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-400 ${index === 0 && project.images!.length % 2 === 1 ? 'md:col-span-2' : ''}`}
                                     >
                                         <img
-                                            src={`/storage/${image.path}`}
+                                            src={asset(image.path)}
                                             alt={
                                                 image.alt_text ||
                                                 `${project.title} screenshot ${index + 1}`
@@ -221,6 +280,9 @@ export default function ProjectShow({
                                             decoding="async"
                                             className="aspect-video w-full object-cover transition duration-500 group-hover:scale-[1.02]"
                                         />
+                                        <span className="absolute right-4 bottom-4 rounded-full bg-slate-950/80 px-3 py-1.5 text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-hover:opacity-100 group-focus-visible:opacity-100">
+                                            View image
+                                        </span>
                                     </button>
                                 ))}
                             </div>
@@ -238,18 +300,41 @@ export default function ProjectShow({
                                     <Link
                                         key={item.id}
                                         href={`/projects/${item.slug}`}
-                                        className="group rounded-2xl border border-white/10 p-5 hover:border-violet-400/30"
+                                        className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[.02] hover:border-violet-400/30"
                                     >
-                                        <p className="font-semibold text-white">
-                                            {item.title}
-                                        </p>
-                                        <p className="mt-2 line-clamp-2 text-sm text-slate-500">
-                                            {item.description}
-                                        </p>
-                                        <ArrowUpRight
-                                            className="mt-5 text-violet-400 transition group-hover:translate-x-1"
-                                            size={17}
-                                        />
+                                        <div className="aspect-video overflow-hidden bg-gradient-to-br from-violet-950 to-slate-950">
+                                            {item.image || item.images?.[0] ? (
+                                                <img
+                                                    src={asset(
+                                                        item.image ||
+                                                            item.images?.[0]
+                                                                .path,
+                                                    )}
+                                                    alt={`Screenshot of ${item.title}`}
+                                                    loading="lazy"
+                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                                                />
+                                            ) : (
+                                                <div className="flex h-full items-center justify-center">
+                                                    <Code2 className="text-violet-400/70" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="p-5">
+                                            <p className="text-xs tracking-[.15em] text-violet-400 uppercase">
+                                                {item.category || 'Project'}
+                                            </p>
+                                            <p className="mt-2 font-semibold text-white">
+                                                {item.title}
+                                            </p>
+                                            <p className="mt-2 line-clamp-2 text-sm text-slate-500">
+                                                {item.description}
+                                            </p>
+                                            <ArrowUpRight
+                                                className="mt-5 text-violet-400 transition group-hover:translate-x-1"
+                                                size={17}
+                                            />
+                                        </div>
                                     </Link>
                                 ))}
                             </div>
@@ -258,23 +343,51 @@ export default function ProjectShow({
                 )}
             </main>
             <Dialog
-                open={Boolean(selectedImage)}
-                onOpenChange={(open) => !open && setSelectedImage(null)}
+                open={selectedImageIndex !== null}
+                onOpenChange={(open) => !open && setSelectedImageIndex(null)}
             >
-                <DialogContent className="max-w-6xl border-white/10 bg-[#090c15] p-3 text-white sm:max-w-6xl">
+                <DialogContent className="max-w-6xl border-white/10 bg-[#090c15] p-3 text-white sm:max-w-6xl sm:p-5">
                     <DialogTitle className="sr-only">
                         Project screenshot preview
                     </DialogTitle>
                     {selectedImage && (
-                        <img
-                            src={`/storage/${selectedImage.path}`}
-                            alt={
-                                selectedImage.alt_text ||
-                                `${project.title} screenshot`
-                            }
-                            decoding="async"
-                            className="max-h-[82vh] w-full rounded-xl object-contain"
-                        />
+                        <div>
+                            <img
+                                src={asset(selectedImage.path)}
+                                alt={selectedImage.alt}
+                                decoding="async"
+                                className="max-h-[76vh] w-full rounded-xl object-contain"
+                            />
+                            <div className="mt-3 flex items-center justify-between gap-4 px-1">
+                                <p className="min-w-0 truncate text-sm text-slate-400">
+                                    {selectedImage.alt}
+                                </p>
+                                {previewImages.length > 1 && (
+                                    <div className="flex shrink-0 items-center gap-2">
+                                        <span className="text-xs text-slate-500">
+                                            {selectedImageIndex! + 1} /{' '}
+                                            {previewImages.length}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={showPreviousImage}
+                                            className="grid size-9 place-items-center rounded-full border border-white/10 hover:bg-white/10"
+                                            aria-label="Previous screenshot"
+                                        >
+                                            <ChevronLeft size={18} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={showNextImage}
+                                            className="grid size-9 place-items-center rounded-full border border-white/10 hover:bg-white/10"
+                                            aria-label="Next screenshot"
+                                        >
+                                            <ChevronRight size={18} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     )}
                 </DialogContent>
             </Dialog>

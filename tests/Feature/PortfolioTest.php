@@ -41,6 +41,33 @@ class PortfolioTest extends TestCase
         $this->get(route('projects.show', $draft))->assertNotFound();
     }
 
+    public function test_project_detail_fills_related_work_from_other_categories(): void
+    {
+        $project = Project::query()->create([
+            'title' => 'Main project', 'slug' => 'main-project',
+            'category' => 'Web App', 'is_published' => true,
+        ]);
+        Project::query()->create([
+            'title' => 'Related web app', 'slug' => 'related-web-app',
+            'category' => 'Web App', 'is_published' => true,
+        ]);
+        Project::query()->create([
+            'title' => 'Mobile project', 'slug' => 'mobile-project',
+            'category' => 'Mobile', 'is_published' => true,
+        ]);
+        Project::query()->create([
+            'title' => 'API project', 'slug' => 'api-project',
+            'category' => 'API', 'is_published' => true,
+        ]);
+
+        $this->get(route('projects.show', $project))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('projects/show')
+                ->has('relatedProjects', 3)
+                ->where('relatedProjects.0.category', 'Web App'));
+    }
+
     public function test_sitemap_only_contains_public_portfolio_pages(): void
     {
         $published = Project::query()->create([
