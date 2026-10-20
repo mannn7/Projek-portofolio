@@ -862,6 +862,38 @@ export default function Portfolio({
             <AnimatePresence>
                 {showIntro && <PortfolioIntro onComplete={completeIntro} />}
             </AnimatePresence>
+            <div
+                aria-hidden="true"
+                className="cosmic-page-background pointer-events-none fixed inset-0 z-0"
+            />
+            <motion.div
+                aria-hidden="true"
+                className="pointer-events-none fixed top-[18%] -left-48 z-0 h-[32rem] w-[32rem] rounded-full bg-violet-700/[.09] blur-[150px]"
+                animate={
+                    reduceMotion
+                        ? undefined
+                        : { x: [0, 110, 20, 0], y: [0, 80, -25, 0] }
+                }
+                transition={{
+                    duration: 22,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                }}
+            />
+            <motion.div
+                aria-hidden="true"
+                className="pointer-events-none fixed right-[-12rem] bottom-[8%] z-0 h-[36rem] w-[36rem] rounded-full bg-cyan-600/[.065] blur-[160px]"
+                animate={
+                    reduceMotion
+                        ? undefined
+                        : { x: [0, -90, -20, 0], y: [0, -60, 35, 0] }
+                }
+                transition={{
+                    duration: 26,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                }}
+            />
             <motion.div
                 aria-hidden="true"
                 className="fixed top-20 right-0 left-0 z-50 h-px origin-left bg-gradient-to-r from-violet-500 via-fuchsia-400 to-cyan-300 shadow-[0_0_12px_rgba(34,211,238,.75)]"
@@ -957,6 +989,7 @@ export default function Portfolio({
                 key={showIntro ? 'intro-active' : 'intro-complete'}
                 id="main-content"
                 tabIndex={-1}
+                className="relative z-10"
             >
                 <section className="relative min-h-screen overflow-hidden pt-20">
                     <motion.div
@@ -1570,7 +1603,7 @@ export default function Portfolio({
                 </section>
                 <section
                     id="projects"
-                    className="relative scroll-mt-24 overflow-hidden bg-[#0a0d16] px-5 py-28 lg:px-8"
+                    className="relative scroll-mt-24 overflow-hidden bg-[#0a0d16]/70 px-5 py-28 backdrop-blur-[2px] lg:px-8"
                 >
                     <SectionAura side="left" />
                     <div className="relative mx-auto max-w-7xl">

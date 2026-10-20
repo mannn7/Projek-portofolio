@@ -218,6 +218,123 @@
     );
 }
 
+.cosmic-page-background {
+    background-color: #070910;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+        radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.42) 0 0.65px,
+            transparent 1px
+        ),
+        radial-gradient(
+            circle,
+            rgba(167, 139, 250, 0.32) 0 0.75px,
+            transparent 1.1px
+        ),
+        radial-gradient(
+            circle,
+            rgba(103, 232, 249, 0.28) 0 0.65px,
+            transparent 1px
+        ),
+        radial-gradient(
+            ellipse at 72% 28%,
+            rgba(76, 29, 149, 0.13),
+            transparent 44%
+        ),
+        radial-gradient(
+            ellipse at 22% 74%,
+            rgba(8, 145, 178, 0.08),
+            transparent 42%
+        );
+    background-position:
+        0 0,
+        0 0,
+        0 0,
+        28px 17px,
+        11px 47px,
+        0 0,
+        0 0;
+    background-size:
+        72px 72px,
+        72px 72px,
+        113px 113px,
+        157px 157px,
+        199px 199px,
+        100% 100%,
+        100% 100%;
+    animation: cosmic-background-drift 38s ease-in-out infinite alternate;
+}
+
+.cosmic-page-background::before,
+.cosmic-page-background::after {
+    position: absolute;
+    width: 11rem;
+    height: 1px;
+    content: '';
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(103, 232, 249, 0.32),
+        transparent
+    );
+    filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.25));
+    transform: rotate(-28deg);
+    opacity: 0.55;
+    animation: cosmic-streak 12s ease-in-out infinite;
+}
+
+.cosmic-page-background::before {
+    top: 31%;
+    left: 8%;
+}
+
+.cosmic-page-background::after {
+    right: 12%;
+    bottom: 24%;
+    animation-delay: -6s;
+}
+
+@keyframes cosmic-background-drift {
+    from {
+        background-position:
+            0 0,
+            0 0,
+            0 0,
+            28px 17px,
+            11px 47px,
+            0 0,
+            0 0;
+    }
+    to {
+        background-position:
+            36px 36px,
+            36px 36px,
+            42px -28px,
+            -34px 61px,
+            73px 9px,
+            0 0,
+            0 0;
+    }
+}
+
+@keyframes cosmic-streak {
+    0%,
+    62%,
+    100% {
+        opacity: 0;
+        translate: -2rem 1rem;
+    }
+    72% {
+        opacity: 0.6;
+    }
+    88% {
+        opacity: 0;
+        translate: 5rem -3rem;
+    }
+}
+
 @keyframes tech-marquee {
     from {
         transform: translateX(0);
