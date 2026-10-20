@@ -26,6 +26,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { PdfThumbnail } from '@/components/pdf-thumbnail';
 
 type RecordData = Record<string, any> & { id?: number };
 type Props = {
@@ -165,8 +166,6 @@ const mediaUrl = (path?: string) =>
     path ? (path.startsWith('/') ? path : `/storage/${path}`) : undefined;
 
 const isPdfPath = (path?: string) => Boolean(path && /\.pdf$/i.test(path));
-const pdfPreviewUrl = (url?: string) =>
-    url ? `${url}#page=1&toolbar=0&navpanes=0&scrollbar=0` : undefined;
 
 function Editor({
     resource,
@@ -289,14 +288,13 @@ function Editor({
                                     (!previews[name] &&
                                         isPdfPath(initial[name]))) && (
                                     <div className="relative mb-4 aspect-video overflow-hidden rounded-xl border border-violet-400/20 bg-white">
-                                        <iframe
-                                            src={pdfPreviewUrl(
+                                        <PdfThumbnail
+                                            src={
                                                 previews[name] ||
-                                                    mediaUrl(initial[name]),
-                                            )}
+                                                mediaUrl(initial[name])!
+                                            }
                                             title="Certificate PDF preview"
-                                            loading="lazy"
-                                            className="pointer-events-none h-full w-full bg-white"
+                                            className="pointer-events-none h-full w-full"
                                         />
                                         <a
                                             href={

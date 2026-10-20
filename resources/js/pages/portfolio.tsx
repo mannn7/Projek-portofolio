@@ -38,6 +38,7 @@ import {
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SeoData } from '@/types/seo';
+import { PdfThumbnail } from '@/components/pdf-thumbnail';
 import {
     Dialog,
     DialogContent,
@@ -107,8 +108,6 @@ const defaults: Profile = {
 };
 
 const isPdfPath = (path?: string) => Boolean(path && /\.pdf$/i.test(path));
-const pdfPreviewUrl = (url: string) =>
-    `${url}#page=1&toolbar=0&navpanes=0&scrollbar=0`;
 type Technology = {
     name: string;
     icon: IconType;
@@ -1512,14 +1511,12 @@ export default function Portfolio({
                                                     className="relative block aspect-[1.414/1] overflow-hidden bg-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-400"
                                                     aria-label={`Open certificate PDF ${item.name}`}
                                                 >
-                                                    <iframe
-                                                        src={pdfPreviewUrl(
-                                                            asset(item.image!)!,
-                                                        )}
+                                                    <PdfThumbnail
+                                                        src={asset(
+                                                            item.image!,
+                                                        )!}
                                                         title={`Preview of ${item.name}`}
-                                                        loading="lazy"
-                                                        className="pointer-events-none absolute inset-1/2 h-[102%] w-[102%] -translate-x-1/2 -translate-y-1/2 bg-white"
-                                                        tabIndex={-1}
+                                                        className="pointer-events-none absolute inset-0 h-full w-full"
                                                     />
                                                     <span className="absolute inset-x-4 bottom-4 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-center text-xs font-semibold text-white opacity-0 backdrop-blur-md transition group-focus-within:opacity-100 group-hover:opacity-100">
                                                         Click to view
