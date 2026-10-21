@@ -11,6 +11,8 @@ import {
     ArrowUpRight,
     Award,
     BriefcaseBusiness,
+    Building2,
+    CalendarDays,
     ChevronLeft,
     ChevronRight,
     Code2,
@@ -1587,53 +1589,105 @@ export default function Portfolio({
                     <div className="relative mx-auto max-w-7xl">
                         <Heading
                             eyebrow="02 / Experience"
-                            title="Where I’ve contributed."
-                            copy="Professional experience published from the private portfolio CMS."
+                            title="Learning. Building. Contributing."
+                            copy="A growing timeline of academic projects and professional experience."
                         />
                         {experiences.length > 0 ? (
-                            <div className="border-l border-white/10">
+                            <div className="relative mt-12 space-y-6 before:absolute before:top-8 before:bottom-8 before:left-6 before:w-px before:bg-gradient-to-b before:from-violet-400/70 before:via-cyan-400/25 before:to-transparent md:before:left-8">
                                 {experiences.map((item, index) => (
                                     <Reveal
                                         key={item.id}
                                         delay={index * 0.06}
-                                        className="relative grid gap-4 border-b border-white/[.07] py-8 pl-8 md:grid-cols-[.35fr_1fr]"
+                                        className="relative pl-16 md:pl-24"
                                     >
-                                        <motion.span
-                                            className="absolute top-10 -left-1.5 size-3 rounded-full border-2 border-[#090c14] bg-violet-400 shadow-[0_0_14px_rgba(167,139,250,.8)]"
+                                        <motion.div
+                                            className="absolute top-8 left-0 flex size-12 items-center justify-center rounded-2xl border border-violet-400/30 bg-[#111526] text-sm font-black text-violet-200 md:size-16"
                                             animate={
                                                 reduceMotion
                                                     ? undefined
                                                     : {
-                                                          scale: [1, 1.45, 1],
-                                                          opacity: [1, 0.7, 1],
+                                                          boxShadow: [
+                                                              '0 0 24px rgba(139,92,246,.16)',
+                                                              '0 0 42px rgba(34,211,238,.25)',
+                                                              '0 0 24px rgba(139,92,246,.16)',
+                                                          ],
                                                       }
                                             }
                                             transition={{
-                                                duration: 2.2,
+                                                duration: 3.2,
                                                 delay: index * 0.25,
                                                 repeat: Infinity,
                                             }}
-                                        />
-                                        <p className="font-mono text-xs text-violet-300">
-                                            {formatDate(item.started_at)} —{' '}
-                                            {formatDate(item.ended_at)}
-                                        </p>
-                                        <div>
-                                            <h3 className="text-xl font-semibold text-white">
-                                                {item.role}
-                                            </h3>
-                                            <p className="mt-1 text-slate-400">
-                                                {item.company}
-                                                {item.location
-                                                    ? ` · ${item.location}`
-                                                    : ''}
-                                            </p>
+                                        >
+                                            {String(index + 1).padStart(2, '0')}
+                                        </motion.div>
+                                        <motion.article
+                                            whileHover={
+                                                reduceMotion
+                                                    ? undefined
+                                                    : { y: -5 }
+                                            }
+                                            className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.018))] p-6 shadow-[0_24px_80px_rgba(0,0,0,.16)] transition duration-500 hover:border-violet-400/30 hover:shadow-[0_30px_100px_rgba(76,29,149,.2)] sm:p-8"
+                                        >
+                                            <div className="pointer-events-none absolute -top-24 -right-20 size-64 rounded-full bg-violet-500/10 blur-3xl transition duration-700 group-hover:bg-cyan-400/10" />
+                                            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                                                <div className="flex min-w-0 items-start gap-4">
+                                                    <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[.055] text-violet-300 shadow-inner">
+                                                        <BriefcaseBusiness
+                                                            size={22}
+                                                            aria-hidden="true"
+                                                        />
+                                                    </span>
+                                                    <div>
+                                                        <p className="mb-2 font-mono text-[10px] tracking-[.2em] text-violet-300 uppercase">
+                                                            Experience{' '}
+                                                            {String(
+                                                                index + 1,
+                                                            ).padStart(2, '0')}
+                                                        </p>
+                                                        <h3 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                                                            {item.role}
+                                                        </h3>
+                                                    </div>
+                                                </div>
+                                                <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-4 py-2 font-mono text-xs text-violet-200">
+                                                    <CalendarDays
+                                                        size={14}
+                                                        aria-hidden="true"
+                                                    />
+                                                    {formatDate(
+                                                        item.started_at,
+                                                    )}{' '}
+                                                    —{' '}
+                                                    {formatDate(item.ended_at)}
+                                                </span>
+                                            </div>
+                                            <div className="relative mt-7 flex flex-wrap gap-x-6 gap-y-3 border-t border-white/[.07] pt-6 text-sm text-slate-400">
+                                                <span className="inline-flex items-center gap-2">
+                                                    <Building2
+                                                        size={16}
+                                                        className="text-cyan-300"
+                                                        aria-hidden="true"
+                                                    />
+                                                    {item.company}
+                                                </span>
+                                                {item.location && (
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <MapPin
+                                                            size={16}
+                                                            className="text-violet-300"
+                                                            aria-hidden="true"
+                                                        />
+                                                        {item.location}
+                                                    </span>
+                                                )}
+                                            </div>
                                             {item.description && (
-                                                <p className="mt-4 max-w-3xl leading-7 text-slate-500">
+                                                <p className="relative mt-6 max-w-4xl text-base leading-8 text-slate-400">
                                                     {item.description}
                                                 </p>
                                             )}
-                                        </div>
+                                        </motion.article>
                                     </Reveal>
                                 ))}
                             </div>
