@@ -1885,14 +1885,14 @@ export default function Portfolio({
                                     <Reveal
                                         key={project.id}
                                         delay={index * 0.05}
-                                        className="h-full w-full"
+                                        className="w-full"
                                     >
-                                        <article className="group relative h-full overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,22,37,.96),rgba(10,13,22,.92))] p-2 shadow-[0_24px_80px_rgba(0,0,0,.2)] transition duration-500 hover:-translate-y-1.5 hover:border-violet-400/30 hover:shadow-[0_30px_90px_rgba(76,29,149,.2)]">
+                                        <article className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,22,37,.96),rgba(10,13,22,.92))] p-2 shadow-[0_24px_80px_rgba(0,0,0,.2)] transition duration-500 hover:-translate-y-1.5 hover:border-violet-400/30 hover:shadow-[0_30px_90px_rgba(76,29,149,.2)]">
                                             <div className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/80 to-transparent" />
                                             <div className="pointer-events-none absolute -right-24 -bottom-24 size-56 rounded-full bg-violet-500/[.08] blur-3xl transition duration-700 group-hover:bg-cyan-400/[.08]" />
                                             <Link
                                                 href={`/projects/${project.slug}`}
-                                                className="relative flex h-full flex-col"
+                                                className="relative flex flex-col"
                                             >
                                                 <div className="relative overflow-hidden rounded-[1.45rem] border border-white/[.08] bg-gradient-to-br from-violet-950 to-slate-950 shadow-[0_18px_50px_rgba(0,0,0,.2)]">
                                                     <div className="flex h-10 items-center justify-between border-b border-white/[.08] bg-[#0c101a]/95 px-4 backdrop-blur">
@@ -1908,7 +1908,7 @@ export default function Portfolio({
                                                             LIVE
                                                         </span>
                                                     </div>
-                                                    <div className="relative aspect-video overflow-hidden bg-[#080b13]">
+                                                    <div className="relative overflow-hidden bg-[#080b13]">
                                                         {project.is_featured && (
                                                             <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-slate-950/80 px-3 py-1.5 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase shadow-lg backdrop-blur-md">
                                                                 <Sparkles
@@ -1926,7 +1926,7 @@ export default function Portfolio({
                                                                 alt={`Screenshot of ${project.title}`}
                                                                 loading="lazy"
                                                                 decoding="async"
-                                                                className="h-full w-full object-contain transition duration-500 group-hover:brightness-105"
+                                                                className="block h-auto w-full transition duration-500 group-hover:brightness-105"
                                                             />
                                                         ) : (
                                                             <div className="flex h-full min-h-72 items-center justify-center">
@@ -1939,7 +1939,7 @@ export default function Portfolio({
                                                         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090c14]/35 via-transparent to-transparent" />
                                                     </div>
                                                 </div>
-                                                <div className="relative flex h-full flex-col px-5 pt-6 pb-5 sm:px-6 sm:pt-7 sm:pb-6">
+                                                <div className="relative flex flex-col px-5 pt-6 pb-5 sm:px-6 sm:pt-7 sm:pb-6">
                                                     <div className="relative flex items-center justify-between gap-4">
                                                         <p className="font-mono text-[10px] tracking-[.22em] text-violet-300 uppercase">
                                                             {project.category ||
@@ -1991,11 +1991,6 @@ export default function Portfolio({
                                                                     0) - 4}
                                                             </span>
                                                         )}
-                                                    </div>
-                                                    <div className="relative mt-6 border-t border-white/[.07] pt-5">
-                                                        <span className="font-mono text-[10px] tracking-[.18em] text-slate-500 uppercase transition group-hover:text-violet-300">
-                                                            Explore case study
-                                                        </span>
                                                     </div>
                                                 </div>
                                             </Link>
