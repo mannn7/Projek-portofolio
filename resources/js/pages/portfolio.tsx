@@ -1879,71 +1879,128 @@ export default function Portfolio({
                             layout
                             className="grid gap-6 md:grid-cols-2"
                         >
-                            {visibleProjects.map((project, index) => (
-                                <Reveal key={project.id} delay={index * 0.05}>
-                                    <article className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[.035] transition duration-500 hover:-translate-y-2 hover:border-violet-400/30 hover:shadow-[0_28px_90px_rgba(76,29,149,.2)]">
-                                        <Link
-                                            href={`/projects/${project.slug}`}
-                                            className="block"
-                                        >
-                                            <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-violet-950 to-slate-950">
-                                                {project.is_featured && (
-                                                    <span className="absolute z-10 m-4 rounded-full border border-white/15 bg-slate-950/75 px-3 py-1 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase backdrop-blur-md">
-                                                        Featured
-                                                    </span>
-                                                )}
-                                                {project.image ? (
-                                                    <img
-                                                        src={asset(
-                                                            project.image,
-                                                        )}
-                                                        alt={`Screenshot of ${project.title}`}
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-full items-center justify-center">
-                                                        <Code2
-                                                            size={54}
-                                                            className="text-violet-400/70"
-                                                        />
+                            {visibleProjects.map((project, index) => {
+                                const isWide =
+                                    visibleProjects.length === 1 ||
+                                    (project.is_featured && index === 0);
+
+                                return (
+                                    <Reveal
+                                        key={project.id}
+                                        delay={index * 0.05}
+                                        className={
+                                            isWide ? 'md:col-span-2' : ''
+                                        }
+                                    >
+                                        <article className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))] shadow-[0_28px_90px_rgba(0,0,0,.18)] transition duration-500 hover:-translate-y-2 hover:border-violet-400/30 hover:shadow-[0_35px_110px_rgba(76,29,149,.24)]">
+                                            <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/80 to-transparent opacity-70" />
+                                            <Link
+                                                href={`/projects/${project.slug}`}
+                                                className={`block ${isWide ? 'lg:grid lg:grid-cols-[1.35fr_.85fr]' : ''}`}
+                                            >
+                                                <div
+                                                    className={`relative overflow-hidden border-b border-white/[.08] bg-gradient-to-br from-violet-950 to-slate-950 ${isWide ? 'lg:min-h-[460px] lg:border-r lg:border-b-0' : ''}`}
+                                                >
+                                                    <div className="flex h-11 items-center justify-between border-b border-white/[.08] bg-[#0c101a]/95 px-4 backdrop-blur">
+                                                        <div className="flex gap-1.5">
+                                                            <span className="size-2.5 rounded-full bg-rose-400/75" />
+                                                            <span className="size-2.5 rounded-full bg-amber-300/75" />
+                                                            <span className="size-2.5 rounded-full bg-emerald-400/75" />
+                                                        </div>
+                                                        <span className="max-w-[60%] truncate rounded-full border border-white/[.07] bg-white/[.035] px-4 py-1 font-mono text-[9px] tracking-wider text-slate-500">
+                                                            {project.slug}
+                                                        </span>
+                                                        <span className="font-mono text-[9px] text-slate-700">
+                                                            LIVE
+                                                        </span>
                                                     </div>
-                                                )}
-                                            </div>
-                                            <div className="p-7">
-                                                <div className="flex items-start justify-between gap-5">
-                                                    <div>
-                                                        <p className="mb-2 font-mono text-xs tracking-[.2em] text-violet-400 uppercase">
+                                                    <div
+                                                        className={`relative overflow-hidden ${isWide ? 'h-[calc(100%-2.75rem)] min-h-[416px]' : 'aspect-[16/9]'}`}
+                                                    >
+                                                        {project.is_featured && (
+                                                            <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-slate-950/80 px-3 py-1.5 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase shadow-lg backdrop-blur-md">
+                                                                <Sparkles
+                                                                    size={12}
+                                                                    aria-hidden="true"
+                                                                />
+                                                                Featured
+                                                            </span>
+                                                        )}
+                                                        {project.image ? (
+                                                            <img
+                                                                src={asset(
+                                                                    project.image,
+                                                                )}
+                                                                alt={`Screenshot of ${project.title}`}
+                                                                loading="lazy"
+                                                                decoding="async"
+                                                                className="h-full w-full object-cover object-top transition duration-700 group-hover:scale-[1.035]"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-full min-h-72 items-center justify-center">
+                                                                <Code2
+                                                                    size={54}
+                                                                    className="text-violet-400/70"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090c14]/35 via-transparent to-transparent" />
+                                                    </div>
+                                                </div>
+                                                <div className="relative flex h-full flex-col p-7 sm:p-8 lg:p-10">
+                                                    <div className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-violet-500/10 blur-3xl transition duration-700 group-hover:bg-cyan-400/10" />
+                                                    <div className="relative flex items-center justify-between gap-4">
+                                                        <p className="font-mono text-xs tracking-[.2em] text-violet-300 uppercase">
                                                             {project.category ||
                                                                 'Project'}
                                                         </p>
-                                                        <h3 className="text-2xl font-semibold text-white">
-                                                            {project.title}
-                                                        </h3>
+                                                        <span className="font-mono text-xs text-slate-600">
+                                                            {String(
+                                                                index + 1,
+                                                            ).padStart(2, '0')}
+                                                            /
+                                                            {String(
+                                                                visibleProjects.length,
+                                                            ).padStart(2, '0')}
+                                                        </span>
                                                     </div>
-                                                    <ArrowUpRight className="text-slate-500 transition group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-white" />
-                                                </div>
-                                                <p className="mt-4 line-clamp-2 leading-7 text-slate-400">
-                                                    {project.description}
-                                                </p>
-                                                <div className="mt-6 flex flex-wrap gap-2">
-                                                    {project.technologies
-                                                        ?.slice(0, 5)
-                                                        .map((tech) => (
-                                                            <span
-                                                                key={tech}
-                                                                className="rounded-full bg-white/[.06] px-3 py-1 text-xs text-slate-400"
-                                                            >
-                                                                {tech}
+                                                    <h3 className="relative mt-6 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                                                        {project.title}
+                                                    </h3>
+                                                    <p
+                                                        className={`relative mt-5 leading-8 text-slate-400 ${isWide ? 'line-clamp-5' : 'line-clamp-3'}`}
+                                                    >
+                                                        {project.description}
+                                                    </p>
+                                                    <div className="relative mt-7 flex flex-wrap gap-2">
+                                                        {project.technologies
+                                                            ?.slice(0, 6)
+                                                            .map((tech) => (
+                                                                <span
+                                                                    key={tech}
+                                                                    className="rounded-full border border-white/[.08] bg-white/[.045] px-3 py-1.5 text-xs text-slate-300 transition group-hover:border-violet-400/20"
+                                                                >
+                                                                    {tech}
+                                                                </span>
+                                                            ))}
+                                                    </div>
+                                                    <div className="relative mt-auto pt-9">
+                                                        <span className="inline-flex items-center gap-3 text-sm font-semibold text-white">
+                                                            View case study
+                                                            <span className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/[.05] text-violet-300 transition duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:border-violet-400/30 group-hover:bg-violet-500/15">
+                                                                <ArrowUpRight
+                                                                    size={17}
+                                                                    aria-hidden="true"
+                                                                />
                                                             </span>
-                                                        ))}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </Link>
-                                    </article>
-                                </Reveal>
-                            ))}
+                                            </Link>
+                                        </article>
+                                    </Reveal>
+                                );
+                            })}
                         </motion.div>
                         {projects.length > 0 &&
                             visibleProjects.length === 0 && (
