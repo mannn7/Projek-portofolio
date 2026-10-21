@@ -773,7 +773,7 @@ function AmbientAudio() {
         const audio = audioRef.current;
         if (!audio) return;
 
-        audio.volume = 0.16;
+        audio.volume = 0.5;
 
         const events: Array<keyof DocumentEventMap> = [
             'pointerdown',
