@@ -1878,36 +1878,37 @@ export default function Portfolio({
                         )}
                         <motion.div
                             layout
-                            className="grid gap-6 md:grid-cols-2"
+                            className={`grid items-start gap-7 ${visibleProjects.length === 1 ? 'mx-auto max-w-2xl' : 'lg:grid-cols-2'}`}
                         >
                             {visibleProjects.map((project, index) => {
                                 return (
                                     <Reveal
                                         key={project.id}
                                         delay={index * 0.05}
-                                        className="h-full"
+                                        className="h-full w-full"
                                     >
-                                        <article className="group relative h-full overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))] shadow-[0_28px_90px_rgba(0,0,0,.18)] transition duration-500 hover:-translate-y-2 hover:border-violet-400/30 hover:shadow-[0_35px_110px_rgba(76,29,149,.24)]">
-                                            <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/80 to-transparent opacity-70" />
+                                        <article className="group relative h-full overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,22,37,.96),rgba(10,13,22,.92))] p-2 shadow-[0_24px_80px_rgba(0,0,0,.2)] transition duration-500 hover:-translate-y-1.5 hover:border-violet-400/30 hover:shadow-[0_30px_90px_rgba(76,29,149,.2)]">
+                                            <div className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/80 to-transparent" />
+                                            <div className="pointer-events-none absolute -right-24 -bottom-24 size-56 rounded-full bg-violet-500/[.08] blur-3xl transition duration-700 group-hover:bg-cyan-400/[.08]" />
                                             <Link
                                                 href={`/projects/${project.slug}`}
-                                                className="flex h-full flex-col"
+                                                className="relative flex h-full flex-col"
                                             >
-                                                <div className="relative overflow-hidden border-b border-white/[.08] bg-gradient-to-br from-violet-950 to-slate-950">
-                                                    <div className="flex h-11 items-center justify-between border-b border-white/[.08] bg-[#0c101a]/95 px-4 backdrop-blur">
+                                                <div className="relative overflow-hidden rounded-[1.45rem] border border-white/[.08] bg-gradient-to-br from-violet-950 to-slate-950 shadow-[0_18px_50px_rgba(0,0,0,.2)]">
+                                                    <div className="flex h-10 items-center justify-between border-b border-white/[.08] bg-[#0c101a]/95 px-4 backdrop-blur">
                                                         <div className="flex gap-1.5">
-                                                            <span className="size-2.5 rounded-full bg-rose-400/75" />
-                                                            <span className="size-2.5 rounded-full bg-amber-300/75" />
-                                                            <span className="size-2.5 rounded-full bg-emerald-400/75" />
+                                                            <span className="size-2 rounded-full bg-rose-400/80" />
+                                                            <span className="size-2 rounded-full bg-amber-300/80" />
+                                                            <span className="size-2 rounded-full bg-emerald-400/80" />
                                                         </div>
-                                                        <span className="max-w-[60%] truncate rounded-full border border-white/[.07] bg-white/[.035] px-4 py-1 font-mono text-[9px] tracking-wider text-slate-500">
+                                                        <span className="max-w-[62%] truncate rounded-full border border-white/[.07] bg-white/[.035] px-4 py-1 font-mono text-[9px] tracking-wider text-slate-500">
                                                             {project.slug}
                                                         </span>
-                                                        <span className="font-mono text-[9px] text-slate-700">
+                                                        <span className="font-mono text-[8px] tracking-[.12em] text-slate-600 uppercase">
                                                             LIVE
                                                         </span>
                                                     </div>
-                                                    <div className="relative aspect-[16/9] overflow-hidden">
+                                                    <div className="relative aspect-[16/8.8] overflow-hidden">
                                                         {project.is_featured && (
                                                             <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-slate-950/80 px-3 py-1.5 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase shadow-lg backdrop-blur-md">
                                                                 <Sparkles
@@ -1938,14 +1939,13 @@ export default function Portfolio({
                                                         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090c14]/35 via-transparent to-transparent" />
                                                     </div>
                                                 </div>
-                                                <div className="relative flex h-full flex-col p-7 sm:p-8 lg:p-10">
-                                                    <div className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-violet-500/10 blur-3xl transition duration-700 group-hover:bg-cyan-400/10" />
+                                                <div className="relative flex h-full flex-col px-5 pt-6 pb-5 sm:px-6 sm:pt-7 sm:pb-6">
                                                     <div className="relative flex items-center justify-between gap-4">
-                                                        <p className="font-mono text-xs tracking-[.2em] text-violet-300 uppercase">
+                                                        <p className="font-mono text-[10px] tracking-[.22em] text-violet-300 uppercase">
                                                             {project.category ||
                                                                 'Project'}
                                                         </p>
-                                                        <span className="font-mono text-xs text-slate-600">
+                                                        <span className="font-mono text-[10px] tracking-[.12em] text-slate-600">
                                                             {String(
                                                                 index + 1,
                                                             ).padStart(2, '0')}
@@ -1955,33 +1955,46 @@ export default function Portfolio({
                                                             ).padStart(2, '0')}
                                                         </span>
                                                     </div>
-                                                    <h3 className="relative mt-6 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                                                        {project.title}
-                                                    </h3>
-                                                    <p className="relative mt-5 line-clamp-3 leading-8 text-slate-400">
+                                                    <div className="relative mt-4 flex items-start justify-between gap-5">
+                                                        <h3 className="text-2xl leading-tight font-semibold tracking-[-.025em] text-white">
+                                                            {project.title}
+                                                        </h3>
+                                                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[.045] text-violet-300 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:border-violet-400/30 group-hover:bg-violet-500/15">
+                                                            <ArrowUpRight
+                                                                size={17}
+                                                                aria-hidden="true"
+                                                            />
+                                                        </span>
+                                                    </div>
+                                                    <p className="relative mt-3 line-clamp-2 leading-7 text-slate-400">
                                                         {project.description}
                                                     </p>
-                                                    <div className="relative mt-7 flex flex-wrap gap-2">
+                                                    <div className="relative mt-5 flex flex-wrap gap-2">
                                                         {project.technologies
-                                                            ?.slice(0, 6)
+                                                            ?.slice(0, 4)
                                                             .map((tech) => (
                                                                 <span
                                                                     key={tech}
-                                                                    className="rounded-full border border-white/[.08] bg-white/[.045] px-3 py-1.5 text-xs text-slate-300 transition group-hover:border-violet-400/20"
+                                                                    className="rounded-full border border-white/[.08] bg-white/[.04] px-3 py-1.5 text-[11px] text-slate-400 transition group-hover:border-violet-400/20 group-hover:text-slate-300"
                                                                 >
                                                                     {tech}
                                                                 </span>
                                                             ))}
-                                                    </div>
-                                                    <div className="relative mt-auto pt-9">
-                                                        <span className="inline-flex items-center gap-3 text-sm font-semibold text-white">
-                                                            View case study
-                                                            <span className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/[.05] text-violet-300 transition duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:border-violet-400/30 group-hover:bg-violet-500/15">
-                                                                <ArrowUpRight
-                                                                    size={17}
-                                                                    aria-hidden="true"
-                                                                />
+                                                        {(project.technologies
+                                                            ?.length ?? 0) >
+                                                            4 && (
+                                                            <span className="rounded-full border border-violet-400/15 bg-violet-500/[.07] px-3 py-1.5 text-[11px] text-violet-300">
+                                                                +
+                                                                {(project
+                                                                    .technologies
+                                                                    ?.length ??
+                                                                    0) - 4}
                                                             </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="relative mt-6 border-t border-white/[.07] pt-5">
+                                                        <span className="font-mono text-[10px] tracking-[.18em] text-slate-500 uppercase transition group-hover:text-violet-300">
+                                                            Explore case study
                                                         </span>
                                                     </div>
                                                 </div>
