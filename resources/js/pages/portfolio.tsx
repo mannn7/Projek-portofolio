@@ -1908,7 +1908,7 @@ export default function Portfolio({
                                                             LIVE
                                                         </span>
                                                     </div>
-                                                    <div className="relative overflow-hidden bg-[#080b13]">
+                                                    <div className="relative aspect-video overflow-hidden bg-[#080b13]">
                                                         {project.is_featured && (
                                                             <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-slate-950/80 px-3 py-1.5 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase shadow-lg backdrop-blur-md">
                                                                 <Sparkles
@@ -1919,15 +1919,27 @@ export default function Portfolio({
                                                             </span>
                                                         )}
                                                         {project.image ? (
-                                                            <img
-                                                                src={asset(
-                                                                    project.image,
-                                                                )}
-                                                                alt={`Screenshot of ${project.title}`}
-                                                                loading="lazy"
-                                                                decoding="async"
-                                                                className="block h-auto w-full transition duration-500 group-hover:brightness-105"
-                                                            />
+                                                            <>
+                                                                <img
+                                                                    src={asset(
+                                                                        project.image,
+                                                                    )}
+                                                                    alt=""
+                                                                    aria-hidden="true"
+                                                                    loading="lazy"
+                                                                    decoding="async"
+                                                                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-25 blur-xl"
+                                                                />
+                                                                <img
+                                                                    src={asset(
+                                                                        project.image,
+                                                                    )}
+                                                                    alt={`Screenshot of ${project.title}`}
+                                                                    loading="lazy"
+                                                                    decoding="async"
+                                                                    className="relative z-[1] h-full w-full object-contain transition duration-500 group-hover:brightness-105"
+                                                                />
+                                                            </>
                                                         ) : (
                                                             <div className="flex h-full min-h-72 items-center justify-center">
                                                                 <Code2
@@ -1936,7 +1948,7 @@ export default function Portfolio({
                                                                 />
                                                             </div>
                                                         )}
-                                                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090c14]/35 via-transparent to-transparent" />
+                                                        <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-[#090c14]/35 via-transparent to-transparent" />
                                                     </div>
                                                 </div>
                                                 <div className="relative flex flex-col px-5 pt-6 pb-5 sm:px-6 sm:pt-7 sm:pb-6">
