@@ -30,12 +30,14 @@ import {
     SiInertia,
     SiJavascript,
     SiLaravel,
+    SiLivewire,
     SiMysql,
     SiPhp,
     SiReact,
     SiSqlite,
     SiTailwindcss,
     SiTypescript,
+    SiVite,
 } from 'react-icons/si';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -154,6 +156,47 @@ const skillIcons: Record<string, IconType> = {
     sqlite: SiSqlite,
     git: SiGit,
     github: SiGithub,
+};
+const skillVisuals: Record<
+    string,
+    { icon: IconType; color: string; glow: string }
+> = {
+    laravel: { icon: SiLaravel, color: '#ff2d20', glow: '255,45,32' },
+    php: { icon: SiPhp, color: '#777bb4', glow: '119,123,180' },
+    livewire: { icon: SiLivewire, color: '#fb70a9', glow: '251,112,169' },
+    javascript: {
+        icon: SiJavascript,
+        color: '#f7df1e',
+        glow: '247,223,30',
+    },
+    react: { icon: SiReact, color: '#61dafb', glow: '97,218,251' },
+    typescript: {
+        icon: SiTypescript,
+        color: '#3178c6',
+        glow: '49,120,198',
+    },
+    inertia: { icon: SiInertia, color: '#9553e9', glow: '149,83,233' },
+    'inertia.js': {
+        icon: SiInertia,
+        color: '#9553e9',
+        glow: '149,83,233',
+    },
+    tailwind: {
+        icon: SiTailwindcss,
+        color: '#06b6d4',
+        glow: '6,182,212',
+    },
+    'tailwind css': {
+        icon: SiTailwindcss,
+        color: '#06b6d4',
+        glow: '6,182,212',
+    },
+    blade: { icon: SiLaravel, color: '#ff2d20', glow: '255,45,32' },
+    mysql: { icon: SiMysql, color: '#4479a1', glow: '68,121,161' },
+    sqlite: { icon: SiSqlite, color: '#7dc9e8', glow: '125,201,232' },
+    vite: { icon: SiVite, color: '#bd34fe', glow: '189,52,254' },
+    git: { icon: SiGit, color: '#f05032', glow: '240,80,50' },
+    github: { icon: SiGithub, color: '#f8fafc', glow: '248,250,252' },
 };
 const nav = [
     ['About', '#about'],
@@ -1604,37 +1647,96 @@ export default function Portfolio({
                             title="Tools for the whole stack."
                             copy="The public list below is managed from the private dashboard."
                         />
-                        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-5 md:grid-cols-2">
                             {Object.entries(groupedSkills).length ? (
                                 Object.entries(groupedSkills).map(
                                     ([group, items], index) => (
                                         <Reveal
                                             key={group}
                                             delay={index * 0.06}
-                                            className="rounded-3xl border border-white/10 bg-white/[.035] p-7 transition duration-300 hover:-translate-y-2 hover:border-violet-400/30 hover:bg-violet-500/[.06] hover:shadow-[0_24px_80px_rgba(76,29,149,.18)]"
+                                            className="group/skill rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))] p-7 transition duration-500 hover:-translate-y-1.5 hover:border-violet-400/30 hover:shadow-[0_30px_90px_rgba(76,29,149,.2)] sm:p-8"
                                         >
-                                            <p className="font-mono text-xs tracking-[.2em] text-violet-400 uppercase">
-                                                {group}
-                                            </p>
-                                            <div className="mt-5 flex flex-wrap gap-2">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <p className="font-mono text-xs tracking-[.22em] text-violet-300 uppercase">
+                                                    {group}
+                                                </p>
+                                                <span className="rounded-full border border-white/10 bg-white/[.04] px-2.5 py-1 font-mono text-[10px] text-slate-500">
+                                                    {String(
+                                                        items.length,
+                                                    ).padStart(2, '0')}
+                                                </span>
+                                            </div>
+                                            <div className="mt-6 grid gap-3 sm:grid-cols-2">
                                                 {items?.map((skill) => {
+                                                    const visual =
+                                                        skillVisuals[
+                                                            skill.icon?.toLowerCase() ??
+                                                                ''
+                                                        ] ??
+                                                        skillVisuals[
+                                                            skill.name.toLowerCase()
+                                                        ];
                                                     const SkillIcon =
+                                                        visual?.icon ??
                                                         skillIcons[
                                                             skill.name.toLowerCase()
-                                                        ] || Code2;
+                                                        ] ??
+                                                        Code2;
 
                                                     return (
-                                                        <span
+                                                        <motion.div
                                                             key={skill.id}
-                                                            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-slate-300 transition hover:border-violet-400/30 hover:bg-violet-500/10"
+                                                            whileHover={
+                                                                reduceMotion
+                                                                    ? undefined
+                                                                    : {
+                                                                          y: -4,
+                                                                          scale: 1.015,
+                                                                      }
+                                                            }
+                                                            className="relative flex min-h-24 items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-4 transition duration-300 hover:border-white/20 hover:bg-white/[.055]"
+                                                            style={{
+                                                                boxShadow:
+                                                                    visual
+                                                                        ? `inset 0 1px 0 rgba(255,255,255,.04), 0 14px 35px rgba(${visual.glow},.06)`
+                                                                        : undefined,
+                                                            }}
                                                         >
-                                                            <SkillIcon
-                                                                size={15}
-                                                                className="text-violet-300"
-                                                                aria-hidden="true"
-                                                            />
-                                                            {skill.name}
-                                                        </span>
+                                                            {visual && (
+                                                                <span
+                                                                    className="pointer-events-none absolute -top-8 -left-8 size-24 rounded-full opacity-20 blur-3xl transition duration-500 group-hover/skill:opacity-35"
+                                                                    style={{
+                                                                        backgroundColor:
+                                                                            visual.color,
+                                                                    }}
+                                                                />
+                                                            )}
+                                                            <span
+                                                                className="relative flex size-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[.055] shadow-inner"
+                                                                style={{
+                                                                    color:
+                                                                        visual?.color ??
+                                                                        '#c4b5fd',
+                                                                    boxShadow:
+                                                                        visual
+                                                                            ? `0 10px 28px rgba(${visual.glow},.16)`
+                                                                            : undefined,
+                                                                }}
+                                                            >
+                                                                <SkillIcon
+                                                                    size={29}
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </span>
+                                                            <span className="relative min-w-0">
+                                                                <span className="block text-[10px] font-semibold tracking-[.16em] text-slate-600 uppercase">
+                                                                    Technology
+                                                                </span>
+                                                                <span className="mt-1 block truncate text-base font-semibold text-slate-100">
+                                                                    {skill.name}
+                                                                </span>
+                                                            </span>
+                                                        </motion.div>
                                                     );
                                                 })}
                                             </div>
