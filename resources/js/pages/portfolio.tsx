@@ -10,7 +10,6 @@ import {
     ArrowDownRight,
     ArrowUpRight,
     Award,
-    BadgeCheck,
     BriefcaseBusiness,
     Building2,
     CalendarDays,
@@ -2045,15 +2044,8 @@ export default function Portfolio({
                             copy="Verified learning milestones across software development and networking."
                         />
                         {certificates.length > 0 ? (
-                            <div className="grid gap-6 md:grid-cols-2">
+                            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                                 {certificates.map((item, index) => {
-                                    const fileCount = new Set(
-                                        [
-                                            item.image,
-                                            ...(item.files ?? []),
-                                        ].filter(Boolean),
-                                    ).size;
-
                                     return (
                                         <Reveal
                                             key={item.id}
@@ -2064,72 +2056,27 @@ export default function Portfolio({
                                                 whileHover={
                                                     reduceMotion
                                                         ? undefined
-                                                        : { y: -7 }
+                                                        : { y: -5 }
                                                 }
-                                                className="group relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))] p-3 shadow-[0_24px_80px_rgba(0,0,0,.16)] transition duration-500 hover:border-violet-400/30 hover:shadow-[0_32px_100px_rgba(76,29,149,.22)]"
+                                                className="group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#0d1019]/85 shadow-[0_20px_60px_rgba(0,0,0,.16)] transition duration-500 hover:border-violet-400/30 hover:shadow-[0_24px_70px_rgba(76,29,149,.16)]"
                                             >
-                                                <div className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/80 to-transparent" />
-                                                <div className="relative z-10 flex items-center justify-between px-3 py-3">
-                                                    <span className="inline-flex items-center gap-2 text-[10px] font-semibold tracking-[.18em] text-emerald-300 uppercase">
-                                                        <BadgeCheck
-                                                            size={15}
-                                                            aria-hidden="true"
-                                                        />
-                                                        Verified credential
-                                                    </span>
-                                                    <span className="font-mono text-[10px] tracking-[.16em] text-slate-600">
-                                                        {String(
-                                                            index + 1,
-                                                        ).padStart(2, '0')}
-                                                        {' / '}
-                                                        {String(
-                                                            certificates.length,
-                                                        ).padStart(2, '0')}
-                                                    </span>
-                                                </div>
-                                                <div className="relative z-10 overflow-hidden rounded-[1.35rem] border border-white/10 bg-white shadow-2xl">
+                                                <div className="pointer-events-none absolute inset-x-10 top-0 z-20 h-px bg-gradient-to-r from-transparent via-violet-400/70 to-transparent" />
+                                                <div className="relative z-10 overflow-hidden border-b border-white/[.08] bg-white">
                                                     <CertificateMedia
                                                         certificate={item}
                                                     />
                                                 </div>
-                                                <div className="relative flex flex-1 flex-col px-4 pt-6 pb-5 sm:px-5">
-                                                    <div className="pointer-events-none absolute -right-12 -bottom-12 size-40 rounded-full bg-violet-500/10 blur-3xl transition duration-700 group-hover:bg-cyan-400/10" />
-                                                    <div className="relative flex items-start justify-between gap-4">
-                                                        <div>
-                                                            <p className="font-mono text-[10px] tracking-[.18em] text-violet-300 uppercase">
-                                                                {item.issuer}
-                                                            </p>
-                                                            <h3 className="mt-3 text-xl leading-snug font-semibold tracking-tight text-white sm:text-2xl">
-                                                                {item.name}
-                                                            </h3>
-                                                        </div>
-                                                        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-500/10 text-violet-300 shadow-[0_12px_30px_rgba(139,92,246,.14)]">
-                                                            <Award
-                                                                size={21}
-                                                                aria-hidden="true"
-                                                            />
-                                                        </span>
-                                                    </div>
-                                                    <div className="relative mt-6 flex flex-wrap items-center gap-3 border-t border-white/[.07] pt-5 text-xs text-slate-500">
-                                                        {item.issued_at && (
-                                                            <span className="inline-flex items-center gap-2 rounded-full border border-white/[.07] bg-white/[.035] px-3 py-2">
-                                                                <CalendarDays
-                                                                    size={14}
-                                                                    className="text-cyan-300"
-                                                                    aria-hidden="true"
-                                                                />
-                                                                {formatDate(
-                                                                    item.issued_at,
-                                                                )}
-                                                            </span>
-                                                        )}
-                                                        <span className="rounded-full border border-white/[.07] bg-white/[.035] px-3 py-2">
-                                                            {fileCount}{' '}
-                                                            {fileCount === 1
-                                                                ? 'document'
-                                                                : 'documents'}
-                                                        </span>
-                                                    </div>
+                                                <div className="relative flex flex-1 flex-col p-6">
+                                                    <div className="pointer-events-none absolute -right-16 -bottom-16 size-36 rounded-full bg-violet-500/[.07] blur-3xl transition duration-700 group-hover:bg-cyan-400/[.08]" />
+                                                    <h3 className="relative text-lg leading-snug font-semibold tracking-tight text-white">
+                                                        {item.name}
+                                                    </h3>
+                                                    <p className="relative mt-2 text-sm text-slate-500">
+                                                        {item.issuer}
+                                                        {item.issued_at
+                                                            ? ` · ${formatDate(item.issued_at)}`
+                                                            : ''}
+                                                    </p>
                                                     {item.credential_url && (
                                                         <a
                                                             href={
@@ -2137,15 +2084,14 @@ export default function Portfolio({
                                                             }
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="relative mt-6 inline-flex w-fit items-center gap-3 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-400"
+                                                            className="relative mt-auto inline-flex w-fit items-center gap-2 pt-5 text-sm font-semibold text-violet-200 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-400"
                                                         >
                                                             Verify credential
-                                                            <span className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/[.05] text-violet-300 transition duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:border-violet-400/30 group-hover:bg-violet-500/15">
-                                                                <ArrowUpRight
-                                                                    size={16}
-                                                                    aria-hidden="true"
-                                                                />
-                                                            </span>
+                                                            <ArrowUpRight
+                                                                size={15}
+                                                                className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                                                                aria-hidden="true"
+                                                            />
                                                         </a>
                                                     )}
                                                 </div>
