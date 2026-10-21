@@ -1881,27 +1881,19 @@ export default function Portfolio({
                             className="grid gap-6 md:grid-cols-2"
                         >
                             {visibleProjects.map((project, index) => {
-                                const isWide =
-                                    visibleProjects.length === 1 ||
-                                    (project.is_featured && index === 0);
-
                                 return (
                                     <Reveal
                                         key={project.id}
                                         delay={index * 0.05}
-                                        className={
-                                            isWide ? 'md:col-span-2' : ''
-                                        }
+                                        className="h-full"
                                     >
-                                        <article className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))] shadow-[0_28px_90px_rgba(0,0,0,.18)] transition duration-500 hover:-translate-y-2 hover:border-violet-400/30 hover:shadow-[0_35px_110px_rgba(76,29,149,.24)]">
+                                        <article className="group relative h-full overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))] shadow-[0_28px_90px_rgba(0,0,0,.18)] transition duration-500 hover:-translate-y-2 hover:border-violet-400/30 hover:shadow-[0_35px_110px_rgba(76,29,149,.24)]">
                                             <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/80 to-transparent opacity-70" />
                                             <Link
                                                 href={`/projects/${project.slug}`}
-                                                className={`block ${isWide ? 'lg:grid lg:grid-cols-[1.35fr_.85fr]' : ''}`}
+                                                className="flex h-full flex-col"
                                             >
-                                                <div
-                                                    className={`relative overflow-hidden border-b border-white/[.08] bg-gradient-to-br from-violet-950 to-slate-950 ${isWide ? 'lg:min-h-[460px] lg:border-r lg:border-b-0' : ''}`}
-                                                >
+                                                <div className="relative overflow-hidden border-b border-white/[.08] bg-gradient-to-br from-violet-950 to-slate-950">
                                                     <div className="flex h-11 items-center justify-between border-b border-white/[.08] bg-[#0c101a]/95 px-4 backdrop-blur">
                                                         <div className="flex gap-1.5">
                                                             <span className="size-2.5 rounded-full bg-rose-400/75" />
@@ -1915,9 +1907,7 @@ export default function Portfolio({
                                                             LIVE
                                                         </span>
                                                     </div>
-                                                    <div
-                                                        className={`relative overflow-hidden ${isWide ? 'h-[calc(100%-2.75rem)] min-h-[416px]' : 'aspect-[16/9]'}`}
-                                                    >
+                                                    <div className="relative aspect-[16/9] overflow-hidden">
                                                         {project.is_featured && (
                                                             <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-slate-950/80 px-3 py-1.5 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase shadow-lg backdrop-blur-md">
                                                                 <Sparkles
@@ -1968,9 +1958,7 @@ export default function Portfolio({
                                                     <h3 className="relative mt-6 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
                                                         {project.title}
                                                     </h3>
-                                                    <p
-                                                        className={`relative mt-5 leading-8 text-slate-400 ${isWide ? 'line-clamp-5' : 'line-clamp-3'}`}
-                                                    >
+                                                    <p className="relative mt-5 line-clamp-3 leading-8 text-slate-400">
                                                         {project.description}
                                                     </p>
                                                     <div className="relative mt-7 flex flex-wrap gap-2">
