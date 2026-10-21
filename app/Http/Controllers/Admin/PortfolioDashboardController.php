@@ -116,6 +116,16 @@ class PortfolioDashboardController extends Controller
         return back()->with('success', 'Project screenshot deleted.');
     }
 
+    public function destroyProjectCover(Project $project): RedirectResponse
+    {
+        if ($project->image) {
+            Storage::disk('public')->delete($project->image);
+            $project->update(['image' => null]);
+        }
+
+        return back()->with('success', 'Project cover deleted.');
+    }
+
     public function destroyCertificateFile(Certificate $certificate, int $index): RedirectResponse
     {
         $files = array_values(array_unique(array_filter([

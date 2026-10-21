@@ -168,6 +168,28 @@ class PortfolioTest extends TestCase
         }
     }
 
+    public function test_admin_can_delete_a_project_cover(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('projects/cover.jpg', 'cover');
+
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $project = Project::query()->create([
+            'title' => 'Project with cover',
+            'slug' => 'project-with-cover',
+            'image' => 'projects/cover.jpg',
+            'is_published' => false,
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.projects.cover.destroy', $project))
+            ->assertRedirect();
+
+        $this->assertNull($project->fresh()->image);
+        Storage::disk('public')->assertMissing('projects/cover.jpg');
+    }
+
     public function test_admin_can_create_experience_and_certificate_content(): void
     {
         $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);

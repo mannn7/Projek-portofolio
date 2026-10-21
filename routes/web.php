@@ -60,6 +60,8 @@ Route::prefix('admin')
             ->name('projects.toggle');
         Route::delete('/project-images/{projectImage}', [PortfolioDashboardController::class, 'destroyProjectImage'])
             ->name('project-images.destroy');
+        Route::delete('/projects/{project}/cover', [PortfolioDashboardController::class, 'destroyProjectCover'])
+            ->name('projects.cover.destroy');
         Route::delete('/certificates/{certificate}/files/{index}', [PortfolioDashboardController::class, 'destroyCertificateFile'])
             ->whereNumber('index')
             ->name('certificates.files.destroy');

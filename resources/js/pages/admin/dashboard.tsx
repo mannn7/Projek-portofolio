@@ -16,7 +16,7 @@ import {
     Eye,
     EyeOff,
 } from 'lucide-react';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
     Dialog,
@@ -186,6 +186,7 @@ function Editor({
 }) {
     const [previews, setPreviews] = useState<Record<string, string>>({});
     const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+    const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
     const normalized = {
         ...initial,
         technologies: Array.isArray(initial.technologies)
@@ -239,14 +240,26 @@ function Editor({
         setData(name, selected);
         setGalleryPreviews(selected.map((file) => URL.createObjectURL(file)));
     };
-    const removeSelectedCertificateFile = (index: number) => {
+    const clearSelectedFile = (name: string) => {
+        if (previews[name]) URL.revokeObjectURL(previews[name]);
+        setData(name, null);
+        if (fileInputs.current[name]) fileInputs.current[name].value = '';
+        setPreviews((current) => {
+            const next = { ...current };
+            delete next[name];
+
+            return next;
+        });
+    };
+    const removeSelectedMultipleFile = (name: string, index: number) => {
         URL.revokeObjectURL(galleryPreviews[index]);
         setData(
-            'files',
-            (data.files as File[]).filter(
+            name,
+            ((data[name] as File[] | undefined) ?? []).filter(
                 (_, fileIndex) => fileIndex !== index,
             ),
         );
+        if (fileInputs.current[name]) fileInputs.current[name].value = '';
         setGalleryPreviews((current) =>
             current.filter((_, fileIndex) => fileIndex !== index),
         );
@@ -303,14 +316,49 @@ function Editor({
                                             isPdfPath(initial[name])))
                                 ) &&
                                 (previews[name] || mediaUrl(initial[name])) && (
-                                    <img
-                                        src={
-                                            previews[name] ||
-                                            mediaUrl(initial[name])
-                                        }
-                                        alt={`${label} preview`}
-                                        className="mb-4 aspect-video w-full rounded-xl object-cover"
-                                    />
+                                    <div className="group/file relative mb-4 aspect-video overflow-hidden rounded-xl">
+                                        <img
+                                            src={
+                                                previews[name] ||
+                                                mediaUrl(initial[name])
+                                            }
+                                            alt={`${label} preview`}
+                                            className="h-full w-full object-cover"
+                                        />
+                                        {(previews[name] ||
+                                            (resource === 'projects' &&
+                                                name === 'image' &&
+                                                initial.id)) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (previews[name]) {
+                                                        clearSelectedFile(name);
+                                                        return;
+                                                    }
+
+                                                    router.delete(
+                                                        `/admin/projects/${initial.id}/cover`,
+                                                        {
+                                                            preserveScroll: true,
+                                                            onSuccess: () =>
+                                                                toast.success(
+                                                                    'Cover screenshot deleted.',
+                                                                ),
+                                                        },
+                                                    );
+                                                }}
+                                                className="absolute top-2 right-2 rounded-lg bg-black/80 p-2 text-rose-300 shadow-lg transition hover:bg-rose-500 hover:text-white"
+                                                aria-label={
+                                                    previews[name]
+                                                        ? `Remove selected ${label}`
+                                                        : `Delete current ${label}`
+                                                }
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             {resource === 'certificates' &&
                                 name === 'image' &&
@@ -355,12 +403,29 @@ function Editor({
                                     <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                                         {galleryPreviews.map(
                                             (preview, index) => (
-                                                <img
+                                                <div
                                                     key={preview}
-                                                    src={preview}
-                                                    alt={`New screenshot ${index + 1}`}
-                                                    className="aspect-video rounded-lg object-cover"
-                                                />
+                                                    className="group/file relative aspect-video overflow-hidden rounded-lg"
+                                                >
+                                                    <img
+                                                        src={preview}
+                                                        alt={`New screenshot ${index + 1}`}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            removeSelectedMultipleFile(
+                                                                name,
+                                                                index,
+                                                            )
+                                                        }
+                                                        className="absolute top-2 right-2 rounded-lg bg-black/80 p-2 text-rose-300 shadow-lg transition hover:bg-rose-500 hover:text-white"
+                                                        aria-label={`Remove selected screenshot ${index + 1}`}
+                                                    >
+                                                        <Trash2 size={15} />
+                                                    </button>
+                                                </div>
                                             ),
                                         )}
                                     </div>
@@ -484,7 +549,8 @@ function Editor({
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    removeSelectedCertificateFile(
+                                                    removeSelectedMultipleFile(
+                                                        name,
                                                         index,
                                                     )
                                                 }
@@ -498,6 +564,9 @@ function Editor({
                                 </div>
                             )}
                             <input
+                                ref={(input) => {
+                                    fileInputs.current[name] = input;
+                                }}
                                 type="file"
                                 multiple={
                                     type === 'multifile' || type === 'certfiles'
