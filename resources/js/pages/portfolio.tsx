@@ -38,7 +38,7 @@ import {
     SiTypescript,
 } from 'react-icons/si';
 import type { FormEvent } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SeoData } from '@/types/seo';
 import { PdfThumbnail } from '@/components/pdf-thumbnail';
 
@@ -765,6 +765,73 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
     );
 }
 
+function AmbientAudio() {
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const startedRef = useRef(false);
+
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        audio.volume = 0.16;
+
+        const events: Array<keyof DocumentEventMap> = [
+            'pointerdown',
+            'touchstart',
+            'keydown',
+        ];
+
+        const removeUnlockListeners = () => {
+            events.forEach((event) =>
+                document.removeEventListener(event, startPlayback),
+            );
+        };
+
+        const startPlayback = () => {
+            void audio
+                .play()
+                .then(() => {
+                    startedRef.current = true;
+                    removeUnlockListeners();
+                })
+                .catch(() => {
+                    // Browsers require a user gesture before audible autoplay.
+                });
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                audio.pause();
+            } else if (startedRef.current) {
+                startPlayback();
+            }
+        };
+
+        startPlayback();
+        events.forEach((event) =>
+            document.addEventListener(event, startPlayback, {
+                passive: true,
+            }),
+        );
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            removeUnlockListeners();
+            document.removeEventListener(
+                'visibilitychange',
+                handleVisibilityChange,
+            );
+            audio.pause();
+        };
+    }, []);
+
+    return (
+        <audio ref={audioRef} loop preload="metadata" aria-hidden="true">
+            <source src="/audio/portfolio-ambient.mp3" type="audio/mpeg" />
+        </audio>
+    );
+}
+
 export default function Portfolio({
     profile: storedProfile,
     projects,
@@ -852,6 +919,7 @@ export default function Portfolio({
             id="top"
             className="min-h-screen overflow-x-hidden bg-[#070910] text-slate-200 selection:bg-violet-500/40"
         >
+            <AmbientAudio />
             <AnimatePresence>
                 {showIntro && <PortfolioIntro onComplete={completeIntro} />}
             </AnimatePresence>
