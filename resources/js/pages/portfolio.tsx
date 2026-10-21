@@ -198,6 +198,18 @@ const skillVisuals: Record<
     git: { icon: SiGit, color: '#f05032', glow: '240,80,50' },
     github: { icon: SiGithub, color: '#f8fafc', glow: '248,250,252' },
 };
+const technologyForSkill = (skill: Skill): Technology => {
+    const visual =
+        skillVisuals[skill.icon?.toLowerCase() ?? ''] ??
+        skillVisuals[skill.name.toLowerCase()];
+
+    return {
+        name: skill.name,
+        icon: visual?.icon ?? skillIcons[skill.name.toLowerCase()] ?? Code2,
+        color: visual?.color ?? '#c4b5fd',
+        glow: visual?.glow ?? '196,181,253',
+    };
+};
 const nav = [
     ['About', '#about'],
     ['Experience', '#experience'],
@@ -897,6 +909,10 @@ export default function Portfolio({
         ...storedProfile,
         photo: storedProfile?.photo || defaults.photo,
     };
+    const displayedStack = useMemo(
+        () => (skills.length ? skills.map(technologyForSkill) : stack),
+        [skills],
+    );
     const [menu, setMenu] = useState(false);
     const categories = useMemo(
         () => [
@@ -1331,40 +1347,44 @@ export default function Portfolio({
                             className="relative mx-auto w-full max-w-md"
                         >
                             <div className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-br from-violet-500/30 to-cyan-500/10 blur-2xl" />
-                            {stack.slice(0, 4).map((technology, index) => {
-                                const Icon = technology.icon;
-                                const positions = [
-                                    '-left-8 top-16',
-                                    '-right-8 top-28',
-                                    '-left-10 bottom-28',
-                                    '-right-8 bottom-16',
-                                ];
+                            {displayedStack
+                                .slice(0, 4)
+                                .map((technology, index) => {
+                                    const Icon = technology.icon;
+                                    const positions = [
+                                        '-left-8 top-16',
+                                        '-right-8 top-28',
+                                        '-left-10 bottom-28',
+                                        '-right-8 bottom-16',
+                                    ];
 
-                                return (
-                                    <motion.div
-                                        key={technology.name}
-                                        className={`absolute z-20 hidden size-14 items-center justify-center rounded-2xl border border-white/15 bg-[#0b1020]/90 shadow-2xl backdrop-blur-xl sm:flex ${positions[index]}`}
-                                        animate={
-                                            reduceMotion
-                                                ? undefined
-                                                : { y: [0, -7, 0] }
-                                        }
-                                        transition={{
-                                            duration: 3.4 + index * 0.4,
-                                            repeat: Infinity,
-                                            ease: 'easeInOut',
-                                            delay: index * 0.3,
-                                        }}
-                                        title={technology.name}
-                                    >
-                                        <Icon
-                                            size={25}
-                                            style={{ color: technology.color }}
-                                            aria-hidden="true"
-                                        />
-                                    </motion.div>
-                                );
-                            })}
+                                    return (
+                                        <motion.div
+                                            key={technology.name}
+                                            className={`absolute z-20 hidden size-14 items-center justify-center rounded-2xl border border-white/15 bg-[#0b1020]/90 shadow-2xl backdrop-blur-xl sm:flex ${positions[index]}`}
+                                            animate={
+                                                reduceMotion
+                                                    ? undefined
+                                                    : { y: [0, -7, 0] }
+                                            }
+                                            transition={{
+                                                duration: 3.4 + index * 0.4,
+                                                repeat: Infinity,
+                                                ease: 'easeInOut',
+                                                delay: index * 0.3,
+                                            }}
+                                            title={technology.name}
+                                        >
+                                            <Icon
+                                                size={25}
+                                                style={{
+                                                    color: technology.color,
+                                                }}
+                                                aria-hidden="true"
+                                            />
+                                        </motion.div>
+                                    );
+                                })}
                             <motion.div
                                 className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#101522] p-4 shadow-2xl shadow-black/50"
                                 animate={
@@ -1483,16 +1503,18 @@ export default function Portfolio({
                     aria-label="Core technology stack"
                 >
                     <div className="tech-marquee flex w-max gap-4 px-2">
-                        {[...stack, ...stack].map((technology, index) => (
-                            <TechMark
-                                key={`${technology.name}-${index}`}
-                                technology={technology}
-                                compact
-                                hiddenFromAssistiveTechnology={
-                                    index >= stack.length
-                                }
-                            />
-                        ))}
+                        {[...displayedStack, ...displayedStack].map(
+                            (technology, index) => (
+                                <TechMark
+                                    key={`${technology.name}-${index}`}
+                                    technology={technology}
+                                    compact
+                                    hiddenFromAssistiveTechnology={
+                                        index >= displayedStack.length
+                                    }
+                                />
+                            ),
+                        )}
                     </div>
                 </section>
                 <section
@@ -1668,6 +1690,10 @@ export default function Portfolio({
                                             </div>
                                             <div className="mt-6 grid gap-3 sm:grid-cols-2">
                                                 {items?.map((skill) => {
+                                                    const technology =
+                                                        technologyForSkill(
+                                                            skill,
+                                                        );
                                                     const visual =
                                                         skillVisuals[
                                                             skill.icon?.toLowerCase() ??
@@ -1677,11 +1703,7 @@ export default function Portfolio({
                                                             skill.name.toLowerCase()
                                                         ];
                                                     const SkillIcon =
-                                                        visual?.icon ??
-                                                        skillIcons[
-                                                            skill.name.toLowerCase()
-                                                        ] ??
-                                                        Code2;
+                                                        technology.icon;
 
                                                     return (
                                                         <motion.div
@@ -1714,9 +1736,7 @@ export default function Portfolio({
                                                             <span
                                                                 className="relative flex size-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[.055] shadow-inner"
                                                                 style={{
-                                                                    color:
-                                                                        visual?.color ??
-                                                                        '#c4b5fd',
+                                                                    color: technology.color,
                                                                     boxShadow:
                                                                         visual
                                                                             ? `0 10px 28px rgba(${visual.glow},.16)`
@@ -1750,13 +1770,15 @@ export default function Portfolio({
                                             Current stack
                                         </p>
                                         <div className="mt-5 flex flex-wrap gap-2">
-                                            {stack.map((technology) => (
-                                                <TechMark
-                                                    key={technology.name}
-                                                    technology={technology}
-                                                    compact
-                                                />
-                                            ))}
+                                            {displayedStack.map(
+                                                (technology) => (
+                                                    <TechMark
+                                                        key={technology.name}
+                                                        technology={technology}
+                                                        compact
+                                                    />
+                                                ),
+                                            )}
                                         </div>
                                     </div>
                                 </Reveal>
