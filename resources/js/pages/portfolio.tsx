@@ -1908,7 +1908,7 @@ export default function Portfolio({
                                                             LIVE
                                                         </span>
                                                     </div>
-                                                    <div className="relative aspect-[16/8.8] overflow-hidden">
+                                                    <div className="relative aspect-video overflow-hidden bg-[#080b13]">
                                                         {project.is_featured && (
                                                             <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-slate-950/80 px-3 py-1.5 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase shadow-lg backdrop-blur-md">
                                                                 <Sparkles
@@ -1926,7 +1926,7 @@ export default function Portfolio({
                                                                 alt={`Screenshot of ${project.title}`}
                                                                 loading="lazy"
                                                                 decoding="async"
-                                                                className="h-full w-full object-cover object-top transition duration-700 group-hover:scale-[1.035]"
+                                                                className="h-full w-full object-contain transition duration-500 group-hover:brightness-105"
                                                             />
                                                         ) : (
                                                             <div className="flex h-full min-h-72 items-center justify-center">
