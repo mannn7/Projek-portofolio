@@ -375,6 +375,7 @@
 }
 
 .group:hover .project-preview-scan,
-.group:focus-within .project-preview-scan {
+.group:focus-within .project-preview-scan,
+.project-preview-scan.is-active {
     animation-play-state: running;
 }

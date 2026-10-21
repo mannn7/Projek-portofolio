@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import {
     AnimatePresence,
     motion,
+    useInView,
     useMotionValue,
     useReducedMotion,
     useScroll,
@@ -655,7 +656,9 @@ function TechMark({
 function ProjectPreview({ project }: { project: Project }) {
     const reduceMotion = useReducedMotion();
     const [activeImage, setActiveImage] = useState(0);
-    const [previewing, setPreviewing] = useState(false);
+    const [pageVisible, setPageVisible] = useState(true);
+    const previewRef = useRef<HTMLDivElement>(null);
+    const isInView = useInView(previewRef, { amount: 0.35 });
     const images = useMemo(
         () =>
             Array.from(
@@ -668,31 +671,53 @@ function ProjectPreview({ project }: { project: Project }) {
             ),
         [project.image, project.images],
     );
+    const previewing = isInView && pageVisible;
+
+    useEffect(() => {
+        const syncPageVisibility = () => setPageVisible(!document.hidden);
+
+        syncPageVisibility();
+        document.addEventListener('visibilitychange', syncPageVisibility);
+
+        return () =>
+            document.removeEventListener(
+                'visibilitychange',
+                syncPageVisibility,
+            );
+    }, []);
+
+    useEffect(() => {
+        if (!previewing) setActiveImage(0);
+    }, [previewing]);
+
+    useEffect(() => {
+        if (!previewing || reduceMotion || images.length < 2) return;
+
+        const nextImagePath = images[(activeImage + 1) % images.length];
+        if (!nextImagePath) return;
+        const nextImageUrl = asset(nextImagePath);
+        if (!nextImageUrl) return;
+
+        const nextImage = new Image();
+        nextImage.src = nextImageUrl;
+    }, [activeImage, images, previewing, reduceMotion]);
 
     useEffect(() => {
         if (!previewing || reduceMotion || images.length < 2) return;
 
         const timer = window.setTimeout(() => {
             setActiveImage((current) => (current + 1) % images.length);
-        }, 1800);
+        }, 2400);
 
         return () => window.clearTimeout(timer);
     }, [activeImage, images.length, previewing, reduceMotion]);
-
-    const stopPreview = () => {
-        setPreviewing(false);
-        setActiveImage(0);
-    };
 
     const currentImage = images[activeImage];
 
     return (
         <div
+            ref={previewRef}
             className="relative aspect-video overflow-hidden bg-[#080b13]"
-            onMouseEnter={() => setPreviewing(true)}
-            onMouseLeave={stopPreview}
-            onFocusCapture={() => setPreviewing(true)}
-            onBlurCapture={stopPreview}
         >
             {project.is_featured && (
                 <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-slate-950/80 px-3 py-1.5 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase shadow-lg backdrop-blur-md">
@@ -729,7 +754,7 @@ function ProjectPreview({ project }: { project: Project }) {
                                     : { opacity: 0, scale: 0.985, x: -14 }
                             }
                             transition={{
-                                duration: 0.48,
+                                duration: 0.62,
                                 ease: [0.22, 1, 0.36, 1],
                             }}
                             className="absolute inset-0 z-[1] h-full w-full object-contain group-hover:brightness-105"
@@ -744,7 +769,7 @@ function ProjectPreview({ project }: { project: Project }) {
             <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-[#090c14]/35 via-transparent to-transparent" />
             <div
                 aria-hidden="true"
-                className="project-preview-scan pointer-events-none absolute inset-x-5 top-0 z-[3] h-px bg-gradient-to-r from-transparent via-cyan-200 to-transparent shadow-[0_0_14px_rgba(103,232,249,.9)]"
+                className={`project-preview-scan pointer-events-none absolute inset-x-5 top-0 z-[3] h-px bg-gradient-to-r from-transparent via-cyan-200 to-transparent shadow-[0_0_14px_rgba(103,232,249,.9)] ${previewing && images.length > 1 ? 'is-active' : ''}`}
             />
             {images.length > 1 && (
                 <span className="absolute right-3 bottom-3 z-[4] rounded-full border border-white/10 bg-slate-950/75 px-3 py-1.5 font-mono text-[9px] tracking-[.14em] text-slate-300 backdrop-blur-md">
