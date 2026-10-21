@@ -351,3 +351,30 @@
 .tech-marquee:hover {
     animation-play-state: paused;
 }
+
+@keyframes project-preview-scan {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0);
+    }
+    12%,
+    82% {
+        opacity: 0.72;
+    }
+    100% {
+        opacity: 0;
+        transform: translate3d(0, 22rem, 0);
+    }
+}
+
+.project-preview-scan {
+    opacity: 0;
+    animation: project-preview-scan 2.4s ease-in-out infinite;
+    animation-play-state: paused;
+    will-change: transform, opacity;
+}
+
+.group:hover .project-preview-scan,
+.group:focus-within .project-preview-scan {
+    animation-play-state: running;
+}

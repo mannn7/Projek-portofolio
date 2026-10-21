@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import {
     AnimatePresence,
     motion,
+    useMotionValue,
     useReducedMotion,
     useScroll,
     useSpring,
@@ -75,6 +76,11 @@ type Project = {
     github_url?: string;
     demo_url?: string;
     is_featured: boolean;
+    images?: Array<{
+        id: number;
+        path: string;
+        alt_text?: string;
+    }>;
 };
 type Skill = { id: number; name: string; category: string; icon?: string };
 type Experience = {
@@ -646,6 +652,158 @@ function TechMark({
     );
 }
 
+function ProjectPreview({ project }: { project: Project }) {
+    const reduceMotion = useReducedMotion();
+    const [activeImage, setActiveImage] = useState(0);
+    const [previewing, setPreviewing] = useState(false);
+    const images = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    [
+                        project.image,
+                        ...(project.images?.map((image) => image.path) ?? []),
+                    ].filter((path): path is string => Boolean(path)),
+                ),
+            ),
+        [project.image, project.images],
+    );
+
+    useEffect(() => {
+        if (!previewing || reduceMotion || images.length < 2) return;
+
+        const timer = window.setTimeout(() => {
+            setActiveImage((current) => (current + 1) % images.length);
+        }, 1800);
+
+        return () => window.clearTimeout(timer);
+    }, [activeImage, images.length, previewing, reduceMotion]);
+
+    const stopPreview = () => {
+        setPreviewing(false);
+        setActiveImage(0);
+    };
+
+    const currentImage = images[activeImage];
+
+    return (
+        <div
+            className="relative aspect-video overflow-hidden bg-[#080b13]"
+            onMouseEnter={() => setPreviewing(true)}
+            onMouseLeave={stopPreview}
+            onFocusCapture={() => setPreviewing(true)}
+            onBlurCapture={stopPreview}
+        >
+            {project.is_featured && (
+                <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-slate-950/80 px-3 py-1.5 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase shadow-lg backdrop-blur-md">
+                    <Sparkles size={12} aria-hidden="true" />
+                    Featured
+                </span>
+            )}
+            {currentImage ? (
+                <>
+                    <img
+                        src={asset(currentImage)}
+                        alt=""
+                        aria-hidden="true"
+                        loading="lazy"
+                        decoding="async"
+                        className="absolute inset-0 h-full w-full scale-110 object-cover opacity-25 blur-xl"
+                    />
+                    <AnimatePresence initial={false} mode="popLayout">
+                        <motion.img
+                            key={currentImage}
+                            src={asset(currentImage)}
+                            alt={`Screenshot of ${project.title}${images.length > 1 ? `, preview ${activeImage + 1}` : ''}`}
+                            loading="lazy"
+                            decoding="async"
+                            initial={
+                                reduceMotion
+                                    ? false
+                                    : { opacity: 0, scale: 1.025, x: 18 }
+                            }
+                            animate={{ opacity: 1, scale: 1, x: 0 }}
+                            exit={
+                                reduceMotion
+                                    ? undefined
+                                    : { opacity: 0, scale: 0.985, x: -14 }
+                            }
+                            transition={{
+                                duration: 0.48,
+                                ease: [0.22, 1, 0.36, 1],
+                            }}
+                            className="absolute inset-0 z-[1] h-full w-full object-contain group-hover:brightness-105"
+                        />
+                    </AnimatePresence>
+                </>
+            ) : (
+                <div className="flex h-full min-h-72 items-center justify-center">
+                    <Code2 size={54} className="text-violet-400/70" />
+                </div>
+            )}
+            <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-[#090c14]/35 via-transparent to-transparent" />
+            <div
+                aria-hidden="true"
+                className="project-preview-scan pointer-events-none absolute inset-x-5 top-0 z-[3] h-px bg-gradient-to-r from-transparent via-cyan-200 to-transparent shadow-[0_0_14px_rgba(103,232,249,.9)]"
+            />
+            {images.length > 1 && (
+                <span className="absolute right-3 bottom-3 z-[4] rounded-full border border-white/10 bg-slate-950/75 px-3 py-1.5 font-mono text-[9px] tracking-[.14em] text-slate-300 backdrop-blur-md">
+                    {String(activeImage + 1).padStart(2, '0')} /{' '}
+                    {String(images.length).padStart(2, '0')}
+                </span>
+            )}
+        </div>
+    );
+}
+
+function MagneticSocialLink({
+    href,
+    label,
+    className,
+    children,
+}: {
+    href: string;
+    label: string;
+    className: string;
+    children: React.ReactNode;
+}) {
+    const reduceMotion = useReducedMotion();
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+    const springX = useSpring(x, { stiffness: 260, damping: 18, mass: 0.35 });
+    const springY = useSpring(y, { stiffness: 260, damping: 18, mass: 0.35 });
+
+    const move = (event: React.PointerEvent<HTMLAnchorElement>) => {
+        if (reduceMotion || event.pointerType === 'touch') return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        x.set((event.clientX - (bounds.left + bounds.width / 2)) * 0.16);
+        y.set((event.clientY - (bounds.top + bounds.height / 2)) * 0.2);
+    };
+
+    const reset = () => {
+        x.set(0);
+        y.set(0);
+    };
+
+    return (
+        <motion.a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={label}
+            className={className}
+            style={reduceMotion ? undefined : { x: springX, y: springY }}
+            onPointerMove={move}
+            onPointerLeave={reset}
+            onBlur={reset}
+            whileHover={reduceMotion ? undefined : { scale: 1.035 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+        >
+            {children}
+        </motion.a>
+    );
+}
+
 function CertificateMedia({ certificate }: { certificate: Certificate }) {
     const reduceMotion = useReducedMotion();
     const [activeFile, setActiveFile] = useState(0);
@@ -913,6 +1071,17 @@ export default function Portfolio({
         damping: 28,
         restDelta: 0.001,
     });
+    const experienceTimelineRef = useRef<HTMLDivElement>(null);
+    const { scrollYProgress: experienceTimelineProgress } = useScroll({
+        target: experienceTimelineRef,
+        offset: ['start 78%', 'end 52%'],
+    });
+    const smoothExperienceProgress = useSpring(experienceTimelineProgress, {
+        stiffness: 95,
+        damping: 24,
+        restDelta: 0.001,
+    });
+    const [activeSection, setActiveSection] = useState('');
     const profile = {
         ...defaults,
         ...storedProfile,
@@ -981,6 +1150,32 @@ export default function Portfolio({
             onSuccess: () => contactForm.reset(),
         });
     };
+
+    useEffect(() => {
+        const sections = nav
+            .map(([, href]) => document.getElementById(href.slice(1)))
+            .filter((section): section is HTMLElement => Boolean(section));
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const visible = entries
+                    .filter((entry) => entry.isIntersecting)
+                    .sort(
+                        (first, second) =>
+                            second.intersectionRatio - first.intersectionRatio,
+                    )[0];
+
+                if (visible) setActiveSection(visible.target.id);
+            },
+            {
+                rootMargin: '-22% 0px -58% 0px',
+                threshold: [0.05, 0.2, 0.45],
+            },
+        );
+
+        sections.forEach((section) => observer.observe(section));
+
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <div
@@ -1067,9 +1262,18 @@ export default function Portfolio({
                             <a
                                 key={href}
                                 href={href}
-                                className="text-sm text-slate-400 transition hover:text-white"
+                                aria-current={
+                                    activeSection === href.slice(1)
+                                        ? 'location'
+                                        : undefined
+                                }
+                                className={`relative py-2 text-sm transition ${activeSection === href.slice(1) ? 'text-white' : 'text-slate-400 hover:text-white'}`}
                             >
                                 {label}
+                                <span
+                                    aria-hidden="true"
+                                    className={`absolute right-0 bottom-0 left-0 h-px origin-center bg-gradient-to-r from-violet-400 to-cyan-300 transition duration-300 ${activeSection === href.slice(1) ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`}
+                                />
                             </a>
                         ))}
                     </div>
@@ -1104,7 +1308,12 @@ export default function Portfolio({
                                     key={href}
                                     href={href}
                                     onClick={() => setMenu(false)}
-                                    className="block py-3 text-slate-300"
+                                    aria-current={
+                                        activeSection === href.slice(1)
+                                            ? 'location'
+                                            : undefined
+                                    }
+                                    className={`block border-l py-3 pl-4 transition ${activeSection === href.slice(1) ? 'border-violet-400 text-white' : 'border-transparent text-slate-300'}`}
                                 >
                                     {label}
                                 </a>
@@ -1600,7 +1809,23 @@ export default function Portfolio({
                             copy="A growing timeline of academic projects and professional experience."
                         />
                         {experiences.length > 0 ? (
-                            <div className="relative mt-12 space-y-6 before:absolute before:top-8 before:bottom-8 before:left-6 before:w-px before:bg-gradient-to-b before:from-violet-400/70 before:via-cyan-400/25 before:to-transparent md:before:left-8">
+                            <div
+                                ref={experienceTimelineRef}
+                                className="relative mt-12 space-y-6"
+                            >
+                                <div
+                                    aria-hidden="true"
+                                    className="absolute top-8 bottom-8 left-6 w-px bg-white/[.08] md:left-8"
+                                />
+                                <motion.div
+                                    aria-hidden="true"
+                                    className="absolute top-8 bottom-8 left-6 w-px origin-top bg-gradient-to-b from-violet-400 via-fuchsia-400 to-cyan-300 shadow-[0_0_16px_rgba(139,92,246,.65)] md:left-8"
+                                    style={{
+                                        scaleY: reduceMotion
+                                            ? 1
+                                            : smoothExperienceProgress,
+                                    }}
+                                />
                                 {experiences.map((item, index) => (
                                     <Reveal
                                         key={item.id}
@@ -1609,21 +1834,29 @@ export default function Portfolio({
                                     >
                                         <motion.div
                                             className="absolute top-8 left-0 flex size-12 items-center justify-center rounded-2xl border border-violet-400/30 bg-[#111526] text-sm font-black text-violet-200 md:size-16"
-                                            animate={
+                                            initial={
                                                 reduceMotion
-                                                    ? undefined
+                                                    ? false
                                                     : {
-                                                          boxShadow: [
-                                                              '0 0 24px rgba(139,92,246,.16)',
-                                                              '0 0 42px rgba(34,211,238,.25)',
-                                                              '0 0 24px rgba(139,92,246,.16)',
-                                                          ],
+                                                          opacity: 0,
+                                                          scale: 0.65,
                                                       }
                                             }
+                                            whileInView={{
+                                                opacity: 1,
+                                                scale: 1,
+                                                boxShadow:
+                                                    '0 0 38px rgba(139,92,246,.24)',
+                                            }}
+                                            viewport={{
+                                                once: true,
+                                                amount: 0.6,
+                                            }}
                                             transition={{
-                                                duration: 3.2,
+                                                type: 'spring',
+                                                stiffness: 230,
+                                                damping: 18,
                                                 delay: index * 0.25,
-                                                repeat: Infinity,
                                             }}
                                         >
                                             {String(index + 1).padStart(2, '0')}
@@ -1893,12 +2126,35 @@ export default function Portfolio({
                                         delay={index * 0.05}
                                         className="w-full"
                                     >
-                                        <article className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,22,37,.96),rgba(10,13,22,.92))] p-2 shadow-[0_24px_80px_rgba(0,0,0,.2)] transition duration-500 hover:-translate-y-1.5 hover:border-violet-400/30 hover:shadow-[0_30px_90px_rgba(76,29,149,.2)]">
+                                        <article
+                                            className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,22,37,.96),rgba(10,13,22,.92))] p-2 shadow-[0_24px_80px_rgba(0,0,0,.2)] transition duration-500 hover:-translate-y-1.5 hover:border-violet-400/30 hover:shadow-[0_30px_90px_rgba(76,29,149,.2)]"
+                                            onPointerMove={(event) => {
+                                                if (reduceMotion) return;
+                                                const bounds =
+                                                    event.currentTarget.getBoundingClientRect();
+                                                event.currentTarget.style.setProperty(
+                                                    '--project-x',
+                                                    `${event.clientX - bounds.left}px`,
+                                                );
+                                                event.currentTarget.style.setProperty(
+                                                    '--project-y',
+                                                    `${event.clientY - bounds.top}px`,
+                                                );
+                                            }}
+                                        >
                                             <div className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/80 to-transparent" />
                                             <div className="pointer-events-none absolute -right-24 -bottom-24 size-56 rounded-full bg-violet-500/[.08] blur-3xl transition duration-700 group-hover:bg-cyan-400/[.08]" />
+                                            <div
+                                                aria-hidden="true"
+                                                className="pointer-events-none absolute inset-0 z-[1] opacity-0 transition duration-300 group-hover:opacity-100"
+                                                style={{
+                                                    background:
+                                                        'radial-gradient(360px circle at var(--project-x, 50%) var(--project-y, 35%), rgba(139,92,246,.16), transparent 62%)',
+                                                }}
+                                            />
                                             <Link
                                                 href={`/projects/${project.slug}`}
-                                                className="relative flex flex-col"
+                                                className="relative z-[2] flex flex-col"
                                             >
                                                 <div className="relative overflow-hidden rounded-[1.45rem] border border-white/[.08] bg-gradient-to-br from-violet-950 to-slate-950 shadow-[0_18px_50px_rgba(0,0,0,.2)]">
                                                     <div className="flex h-10 items-center justify-between border-b border-white/[.08] bg-[#0c101a]/95 px-4 backdrop-blur">
@@ -1914,48 +2170,9 @@ export default function Portfolio({
                                                             LIVE
                                                         </span>
                                                     </div>
-                                                    <div className="relative aspect-video overflow-hidden bg-[#080b13]">
-                                                        {project.is_featured && (
-                                                            <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-slate-950/80 px-3 py-1.5 text-[10px] font-semibold tracking-[.16em] text-violet-200 uppercase shadow-lg backdrop-blur-md">
-                                                                <Sparkles
-                                                                    size={12}
-                                                                    aria-hidden="true"
-                                                                />
-                                                                Featured
-                                                            </span>
-                                                        )}
-                                                        {project.image ? (
-                                                            <>
-                                                                <img
-                                                                    src={asset(
-                                                                        project.image,
-                                                                    )}
-                                                                    alt=""
-                                                                    aria-hidden="true"
-                                                                    loading="lazy"
-                                                                    decoding="async"
-                                                                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-25 blur-xl"
-                                                                />
-                                                                <img
-                                                                    src={asset(
-                                                                        project.image,
-                                                                    )}
-                                                                    alt={`Screenshot of ${project.title}`}
-                                                                    loading="lazy"
-                                                                    decoding="async"
-                                                                    className="relative z-[1] h-full w-full object-contain transition duration-500 group-hover:brightness-105"
-                                                                />
-                                                            </>
-                                                        ) : (
-                                                            <div className="flex h-full min-h-72 items-center justify-center">
-                                                                <Code2
-                                                                    size={54}
-                                                                    className="text-violet-400/70"
-                                                                />
-                                                            </div>
-                                                        )}
-                                                        <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-[#090c14]/35 via-transparent to-transparent" />
-                                                    </div>
+                                                    <ProjectPreview
+                                                        project={project}
+                                                    />
                                                 </div>
                                                 <div className="relative flex flex-col px-5 pt-6 pb-5 sm:px-6 sm:pt-7 sm:pb-6">
                                                     <div className="relative flex items-center justify-between gap-4">
@@ -2162,64 +2379,54 @@ export default function Portfolio({
                             )}
                             <div className="mt-8 flex flex-wrap gap-3">
                                 {profile.github_url && (
-                                    <a
+                                    <MagneticSocialLink
                                         href={profile.github_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        aria-label="GitHub"
-                                        className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/[.08] hover:text-white"
+                                        label="GitHub"
+                                        className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-white/30 hover:bg-white/[.08] hover:text-white"
                                     >
                                         <Github size={18} />
                                         GitHub
-                                    </a>
+                                    </MagneticSocialLink>
                                 )}
                                 {profile.linkedin_url && (
-                                    <a
+                                    <MagneticSocialLink
                                         href={profile.linkedin_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        aria-label="LinkedIn"
-                                        className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/[.06] px-4 py-2.5 text-sm font-medium text-sky-200 transition hover:-translate-y-0.5 hover:border-sky-400/40 hover:bg-sky-400/[.12] hover:text-white"
+                                        label="LinkedIn"
+                                        className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/[.06] px-4 py-2.5 text-sm font-medium text-sky-200 transition hover:border-sky-400/40 hover:bg-sky-400/[.12] hover:text-white"
                                     >
                                         <Linkedin size={18} />
                                         LinkedIn
-                                    </a>
+                                    </MagneticSocialLink>
                                 )}
                                 {profile.whatsapp_url && (
-                                    <a
+                                    <MagneticSocialLink
                                         href={profile.whatsapp_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        aria-label="WhatsApp"
-                                        className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[.06] px-4 py-2.5 text-sm font-medium text-emerald-200 transition hover:-translate-y-0.5 hover:border-emerald-400/40 hover:bg-emerald-400/[.12] hover:text-white"
+                                        label="WhatsApp"
+                                        className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[.06] px-4 py-2.5 text-sm font-medium text-emerald-200 transition hover:border-emerald-400/40 hover:bg-emerald-400/[.12] hover:text-white"
                                     >
                                         <SiWhatsapp size={18} />
                                         WhatsApp
-                                    </a>
+                                    </MagneticSocialLink>
                                 )}
                                 {profile.instagram_url && (
-                                    <a
+                                    <MagneticSocialLink
                                         href={profile.instagram_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        aria-label="Instagram"
-                                        className="inline-flex items-center gap-2 rounded-full border border-pink-400/20 bg-pink-400/[.06] px-4 py-2.5 text-sm font-medium text-pink-200 transition hover:-translate-y-0.5 hover:border-pink-400/40 hover:bg-pink-400/[.12] hover:text-white"
+                                        label="Instagram"
+                                        className="inline-flex items-center gap-2 rounded-full border border-pink-400/20 bg-pink-400/[.06] px-4 py-2.5 text-sm font-medium text-pink-200 transition hover:border-pink-400/40 hover:bg-pink-400/[.12] hover:text-white"
                                     >
                                         <SiInstagram size={18} />
                                         Instagram
-                                    </a>
+                                    </MagneticSocialLink>
                                 )}
                                 {profile.tiktok_url && (
-                                    <a
+                                    <MagneticSocialLink
                                         href={profile.tiktok_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        aria-label="TikTok"
-                                        className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/[.06] px-4 py-2.5 text-sm font-medium text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-cyan-300/[.12] hover:text-white"
+                                        label="TikTok"
+                                        className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/[.06] px-4 py-2.5 text-sm font-medium text-cyan-100 transition hover:border-cyan-300/40 hover:bg-cyan-300/[.12] hover:text-white"
                                     >
                                         <SiTiktok size={18} />
                                         TikTok
-                                    </a>
+                                    </MagneticSocialLink>
                                 )}
                             </div>
                         </div>
