@@ -47,6 +47,9 @@ class PortfolioController extends Controller
                     'sameAs' => array_values(array_filter([
                         $profile?->github_url,
                         $profile?->linkedin_url,
+                        $profile?->whatsapp_url,
+                        $profile?->instagram_url,
+                        $profile?->tiktok_url,
                     ])),
                 ], fn ($value) => $value !== null && $value !== ''),
             ],

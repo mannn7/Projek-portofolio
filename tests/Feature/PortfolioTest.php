@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\ContactMessage;
 use App\Models\Certificate;
+use App\Models\ContactMessage;
+use App\Models\Profile;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -137,6 +138,29 @@ class PortfolioTest extends TestCase
                 'photo' => UploadedFile::fake()->image('small.jpg', 120, 120),
             ])
             ->assertSessionHasErrors('photo');
+    }
+
+    public function test_admin_can_save_profile_social_links(): void
+    {
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.store', 'profile'), [
+                'name' => 'Firman Aji',
+                'github_url' => 'https://github.com/mannn7',
+                'whatsapp_url' => 'https://wa.me/628123456789',
+                'instagram_url' => 'https://www.instagram.com/firmanaji',
+                'tiktok_url' => 'https://www.tiktok.com/@firmanaji',
+                'available_for_work' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $profile = Profile::query()->firstOrFail();
+
+        $this->assertSame('https://wa.me/628123456789', $profile->whatsapp_url);
+        $this->assertSame('https://www.instagram.com/firmanaji', $profile->instagram_url);
+        $this->assertSame('https://www.tiktok.com/@firmanaji', $profile->tiktok_url);
     }
 
     public function test_admin_can_upload_multiple_project_screenshots(): void

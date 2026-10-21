@@ -30,6 +30,7 @@ import {
     SiGit,
     SiGithub,
     SiInertia,
+    SiInstagram,
     SiJavascript,
     SiLaravel,
     SiLivewire,
@@ -38,8 +39,10 @@ import {
     SiReact,
     SiSqlite,
     SiTailwindcss,
+    SiTiktok,
     SiTypescript,
     SiVite,
+    SiWhatsapp,
 } from 'react-icons/si';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -55,6 +58,9 @@ type Profile = {
     email?: string;
     github_url?: string;
     linkedin_url?: string;
+    whatsapp_url?: string;
+    instagram_url?: string;
+    tiktok_url?: string;
     location?: string;
     available_for_work: boolean;
 };
@@ -2154,16 +2160,17 @@ export default function Portfolio({
                                     {profile.email}
                                 </a>
                             )}
-                            <div className="mt-8 flex gap-3">
+                            <div className="mt-8 flex flex-wrap gap-3">
                                 {profile.github_url && (
                                     <a
                                         href={profile.github_url}
                                         target="_blank"
                                         rel="noreferrer"
                                         aria-label="GitHub"
-                                        className="rounded-full border border-white/15 p-3"
+                                        className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/[.08] hover:text-white"
                                     >
-                                        <Github />
+                                        <Github size={18} />
+                                        GitHub
                                     </a>
                                 )}
                                 {profile.linkedin_url && (
@@ -2172,9 +2179,46 @@ export default function Portfolio({
                                         target="_blank"
                                         rel="noreferrer"
                                         aria-label="LinkedIn"
-                                        className="rounded-full border border-white/15 p-3"
+                                        className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/[.06] px-4 py-2.5 text-sm font-medium text-sky-200 transition hover:-translate-y-0.5 hover:border-sky-400/40 hover:bg-sky-400/[.12] hover:text-white"
                                     >
-                                        <Linkedin />
+                                        <Linkedin size={18} />
+                                        LinkedIn
+                                    </a>
+                                )}
+                                {profile.whatsapp_url && (
+                                    <a
+                                        href={profile.whatsapp_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        aria-label="WhatsApp"
+                                        className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[.06] px-4 py-2.5 text-sm font-medium text-emerald-200 transition hover:-translate-y-0.5 hover:border-emerald-400/40 hover:bg-emerald-400/[.12] hover:text-white"
+                                    >
+                                        <SiWhatsapp size={18} />
+                                        WhatsApp
+                                    </a>
+                                )}
+                                {profile.instagram_url && (
+                                    <a
+                                        href={profile.instagram_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        aria-label="Instagram"
+                                        className="inline-flex items-center gap-2 rounded-full border border-pink-400/20 bg-pink-400/[.06] px-4 py-2.5 text-sm font-medium text-pink-200 transition hover:-translate-y-0.5 hover:border-pink-400/40 hover:bg-pink-400/[.12] hover:text-white"
+                                    >
+                                        <SiInstagram size={18} />
+                                        Instagram
+                                    </a>
+                                )}
+                                {profile.tiktok_url && (
+                                    <a
+                                        href={profile.tiktok_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        aria-label="TikTok"
+                                        className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/[.06] px-4 py-2.5 text-sm font-medium text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-cyan-300/[.12] hover:text-white"
+                                    >
+                                        <SiTiktok size={18} />
+                                        TikTok
                                     </a>
                                 )}
                             </div>

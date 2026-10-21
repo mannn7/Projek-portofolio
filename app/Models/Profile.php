@@ -17,6 +17,9 @@ class Profile extends Model
         'email',
         'github_url',
         'linkedin_url',
+        'whatsapp_url',
+        'instagram_url',
+        'tiktok_url',
         'location',
         'available_for_work',
     ];
