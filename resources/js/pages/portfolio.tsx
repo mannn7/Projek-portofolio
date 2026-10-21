@@ -1878,7 +1878,7 @@ export default function Portfolio({
                         )}
                         <motion.div
                             layout
-                            className={`grid items-start gap-7 ${visibleProjects.length === 1 ? 'mx-auto max-w-2xl' : 'lg:grid-cols-2'}`}
+                            className="grid items-start gap-7 md:grid-cols-2"
                         >
                             {visibleProjects.map((project, index) => {
                                 return (
