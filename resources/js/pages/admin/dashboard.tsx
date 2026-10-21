@@ -166,8 +166,12 @@ const fields: Record<string, Array<[string, string, string]>> = {
     ],
 };
 
-const mediaUrl = (path?: string) =>
-    path ? (path.startsWith('/') ? path : `/storage/${path}`) : undefined;
+const mediaUrl = (path?: unknown) =>
+    typeof path === 'string' && path.length > 0
+        ? path.startsWith('/')
+            ? path
+            : `/storage/${path}`
+        : undefined;
 
 const isPdfPath = (path?: string) => Boolean(path && /\.pdf$/i.test(path));
 
@@ -288,7 +292,8 @@ function Editor({
                       type === 'multifile' ||
                       type === 'certfiles' ? (
                         <div className="rounded-2xl border border-dashed border-white/15 bg-black/20 p-4">
-                            {name !== 'cv_file' &&
+                            {type === 'file' &&
+                                name !== 'cv_file' &&
                                 !(
                                     resource === 'certificates' &&
                                     ((data[name] instanceof File &&
