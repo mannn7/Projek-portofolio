@@ -64,6 +64,7 @@ class User extends Authenticatable
      *
      * Satu user memiliki satu profil portfolio.
      */
+    /** @return HasOne<Profile, $this> */
     public function profile(): HasOne
     {
         return $this->hasOne(Profile::class);

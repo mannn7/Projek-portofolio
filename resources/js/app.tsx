@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/react';
+import AmbientAudio from '@/components/ambient-audio';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -12,7 +13,6 @@ void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
-            case name === 'welcome':
             case name === 'portfolio':
             case name.startsWith('projects/'):
             case name.startsWith('admin/'):
@@ -27,10 +27,11 @@ void createInertiaApp({
         }
     },
     strictMode: true,
-    withApp(app) {
+    withApp(app, { page }) {
         return (
             <TooltipProvider delayDuration={0}>
                 {app}
+                <AmbientAudio initialSettings={page.props.ambientAudio} />
                 <Toaster />
             </TooltipProvider>
         );

@@ -6,6 +6,7 @@ use App\Models\Certificate;
 use App\Models\ContactMessage;
 use App\Models\Profile;
 use App\Models\Project;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -26,6 +27,24 @@ class PortfolioTest extends TestCase
                 ->has('skills')
                 ->has('experiences')
                 ->has('certificates'));
+    }
+
+    public function test_public_pages_receive_global_ambient_audio_settings(): void
+    {
+        SiteSetting::query()->firstOrFail()->update([
+            'ambient_audio' => 'audio/custom-track.mp3',
+            'audio_volume' => 65,
+            'audio_enabled' => true,
+            'audio_loop' => false,
+        ]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('ambientAudio.source', '/storage/audio/custom-track.mp3')
+                ->where('ambientAudio.volume', 65)
+                ->where('ambientAudio.enabled', true)
+                ->where('ambientAudio.loop', false));
     }
 
     public function test_only_published_projects_have_public_detail_pages(): void
@@ -126,6 +145,69 @@ class PortfolioTest extends TestCase
         $this->assertNotNull($project->fresh()->published_at);
     }
 
+    public function test_admin_can_upload_replace_and_delete_portfolio_music(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.audio-settings.update'), [
+                'ambient_audio' => UploadedFile::fake()->create('first.mp3', 1024, 'audio/mpeg'),
+                'audio_volume' => 60,
+                'audio_enabled' => true,
+                'audio_loop' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $settings = SiteSetting::query()->firstOrFail();
+        $firstPath = $settings->ambient_audio;
+        $this->assertSame(60, $settings->audio_volume);
+        Storage::disk('public')->assertExists($firstPath);
+
+        $this->actingAs($admin)
+            ->post(route('admin.audio-settings.update'), [
+                'ambient_audio' => UploadedFile::fake()->create('replacement.ogg', 1024, 'audio/ogg'),
+                'audio_volume' => 35,
+                'audio_enabled' => true,
+                'audio_loop' => false,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $settings->refresh();
+        $replacementPath = $settings->ambient_audio;
+        $this->assertNotSame($firstPath, $replacementPath);
+        $this->assertSame(35, $settings->audio_volume);
+        $this->assertFalse($settings->audio_loop);
+        Storage::disk('public')->assertMissing($firstPath);
+        Storage::disk('public')->assertExists($replacementPath);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.audio-settings.file.destroy'))
+            ->assertRedirect();
+
+        $settings->refresh();
+        $this->assertNull($settings->ambient_audio);
+        $this->assertFalse($settings->audio_enabled);
+        Storage::disk('public')->assertMissing($replacementPath);
+    }
+
+    public function test_portfolio_music_rejects_invalid_files_and_volume(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.audio-settings.update'), [
+                'ambient_audio' => UploadedFile::fake()->create('not-audio.pdf', 256, 'application/pdf'),
+                'audio_volume' => 120,
+                'audio_enabled' => true,
+                'audio_loop' => true,
+            ])
+            ->assertSessionHasErrors(['ambient_audio', 'audio_volume']);
+    }
+
     public function test_profile_photo_must_meet_minimum_dimensions(): void
     {
         $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
@@ -216,6 +298,7 @@ class PortfolioTest extends TestCase
 
     public function test_admin_can_create_experience_and_certificate_content(): void
     {
+        Storage::fake('public');
         $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
         config(['portfolio.admin_email' => $admin->email]);
 
@@ -234,6 +317,7 @@ class PortfolioTest extends TestCase
                 'name' => 'Verified Certificate',
                 'issuer' => 'Example Issuer',
                 'issued_at' => '2025-02-01',
+                'files' => [UploadedFile::fake()->create('certificate.pdf', 128, 'application/pdf')],
                 'sort_order' => 0,
                 'is_active' => true,
             ])
@@ -246,6 +330,25 @@ class PortfolioTest extends TestCase
         $this->assertDatabaseHas('certificates', [
             'name' => 'Verified Certificate',
             'is_active' => true,
+        ]);
+    }
+
+    public function test_new_certificate_requires_at_least_one_file(): void
+    {
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.store', 'certificates'), [
+                'name' => 'Certificate without evidence',
+                'issuer' => 'Example Issuer',
+                'sort_order' => 0,
+                'is_active' => true,
+            ])
+            ->assertSessionHasErrors('files');
+
+        $this->assertDatabaseMissing('certificates', [
+            'name' => 'Certificate without evidence',
         ]);
     }
 
@@ -329,6 +432,159 @@ class PortfolioTest extends TestCase
         foreach ($certificate->files as $file) {
             Storage::disk('public')->assertExists($file);
         }
+    }
+
+    public function test_project_gallery_limit_includes_existing_screenshots(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $project = Project::query()->create([
+            'title' => 'Gallery limit', 'slug' => 'gallery-limit', 'is_published' => false,
+        ]);
+        foreach (range(1, 7) as $index) {
+            $project->images()->create([
+                'path' => "projects/gallery/existing-{$index}.jpg",
+                'sort_order' => $index,
+            ]);
+        }
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.update', ['resource' => 'projects', 'id' => $project->id]), [
+                'title' => $project->title,
+                'slug' => $project->slug,
+                'gallery' => [
+                    UploadedFile::fake()->image('new-one.jpg', 1200, 700),
+                    UploadedFile::fake()->image('new-two.jpg', 1200, 700),
+                ],
+                'sort_order' => 0,
+                'is_featured' => false,
+                'is_published' => false,
+            ])
+            ->assertSessionHasErrors('gallery');
+
+        $this->assertCount(7, $project->fresh()->images);
+    }
+
+    public function test_certificate_file_limit_includes_existing_files(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $paths = array_map(fn (int $index) => "certificates/existing-{$index}.pdf", range(1, 7));
+        $certificate = Certificate::query()->create([
+            'name' => 'Certificate limit',
+            'issuer' => 'Example Issuer',
+            'image' => $paths[0],
+            'files' => $paths,
+            'is_active' => true,
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.update', ['resource' => 'certificates', 'id' => $certificate->id]), [
+                'name' => $certificate->name,
+                'issuer' => $certificate->issuer,
+                'files' => [
+                    UploadedFile::fake()->create('new-one.pdf', 128, 'application/pdf'),
+                    UploadedFile::fake()->create('new-two.pdf', 128, 'application/pdf'),
+                ],
+                'sort_order' => 0,
+                'is_active' => true,
+            ])
+            ->assertSessionHasErrors('files');
+
+        $this->assertSame($paths, $certificate->fresh()->files);
+    }
+
+    public function test_replacing_legacy_certificate_image_keeps_files_consistent(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('certificates/legacy.pdf', 'legacy');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $certificate = Certificate::query()->create([
+            'name' => 'Legacy Certificate',
+            'issuer' => 'Example Issuer',
+            'image' => 'certificates/legacy.pdf',
+            'files' => ['certificates/legacy.pdf'],
+            'is_active' => true,
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.content.update', ['resource' => 'certificates', 'id' => $certificate->id]), [
+                'name' => $certificate->name,
+                'issuer' => $certificate->issuer,
+                'image' => UploadedFile::fake()->create('replacement.pdf', 128, 'application/pdf'),
+                'sort_order' => 0,
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $certificate->refresh();
+        $this->assertCount(1, $certificate->files);
+        $this->assertSame($certificate->image, $certificate->files[0]);
+        Storage::disk('public')->assertMissing('certificates/legacy.pdf');
+        Storage::disk('public')->assertExists($certificate->image);
+    }
+
+    public function test_admin_can_delete_project_gallery_image_and_project_media(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('projects/cover.jpg', 'cover');
+        Storage::disk('public')->put('projects/gallery/one.jpg', 'one');
+        Storage::disk('public')->put('projects/gallery/two.jpg', 'two');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $project = Project::query()->create([
+            'title' => 'Project media',
+            'slug' => 'project-media',
+            'image' => 'projects/cover.jpg',
+            'is_published' => false,
+        ]);
+        $firstImage = $project->images()->create(['path' => 'projects/gallery/one.jpg', 'sort_order' => 1]);
+        $project->images()->create(['path' => 'projects/gallery/two.jpg', 'sort_order' => 2]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.project-images.destroy', $firstImage))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('project_images', ['id' => $firstImage->id]);
+        Storage::disk('public')->assertMissing('projects/gallery/one.jpg');
+
+        $this->actingAs($admin)
+            ->delete(route('admin.content.destroy', ['resource' => 'projects', 'id' => $project->id]))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('projects', ['id' => $project->id]);
+        Storage::disk('public')->assertMissing('projects/cover.jpg');
+        Storage::disk('public')->assertMissing('projects/gallery/two.jpg');
+    }
+
+    public function test_admin_can_delete_profile_photo_and_cv(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('profile/photo.jpg', 'photo');
+        Storage::disk('public')->put('profile/cv.pdf', 'cv');
+        $admin = User::factory()->create(['email' => 'admin@example.com', 'email_verified_at' => now()]);
+        $profile = Profile::query()->create([
+            'user_id' => $admin->id,
+            'name' => 'Firman Aji',
+            'photo' => 'profile/photo.jpg',
+            'cv_file' => 'profile/cv.pdf',
+        ]);
+        config(['portfolio.admin_email' => $admin->email]);
+
+        foreach (['photo', 'cv_file'] as $field) {
+            $this->actingAs($admin)
+                ->delete(route('admin.profiles.media.destroy', [$profile, $field]))
+                ->assertRedirect();
+        }
+
+        $profile->refresh();
+        $this->assertNull($profile->photo);
+        $this->assertNull($profile->cv_file);
+        Storage::disk('public')->assertMissing('profile/photo.jpg');
+        Storage::disk('public')->assertMissing('profile/cv.pdf');
     }
 
     public function test_admin_can_delete_one_certificate_file(): void

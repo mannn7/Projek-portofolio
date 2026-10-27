@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property Carbon|null $published_at
+ * @property-read Collection<int, ProjectImage> $images
+ */
 class Project extends Model
 {
     protected $fillable = [
@@ -37,6 +43,7 @@ class Project extends Model
         ];
     }
 
+    /** @return HasMany<ProjectImage, $this> */
     public function images(): HasMany
     {
         return $this->hasMany(ProjectImage::class)->orderBy('sort_order');

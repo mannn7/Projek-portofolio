@@ -33,7 +33,6 @@ class SecurityTest extends TestCase
             );
     }
 
-
     public function test_security_page_renders_without_two_factor_when_feature_is_disabled()
     {
         $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());

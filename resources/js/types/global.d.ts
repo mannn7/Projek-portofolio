@@ -15,6 +15,12 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             currentTeam: Team | null;
             teams: Team[];
+            ambientAudio: {
+                source: string | null;
+                volume: number;
+                enabled: boolean;
+                loop: boolean;
+            };
             [key: string]: unknown;
         };
     }

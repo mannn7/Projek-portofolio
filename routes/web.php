@@ -62,6 +62,13 @@ Route::prefix('admin')
             ->name('project-images.destroy');
         Route::delete('/projects/{project}/cover', [PortfolioDashboardController::class, 'destroyProjectCover'])
             ->name('projects.cover.destroy');
+        Route::delete('/profiles/{profile}/media/{field}', [PortfolioDashboardController::class, 'destroyProfileMedia'])
+            ->whereIn('field', ['photo', 'cv_file'])
+            ->name('profiles.media.destroy');
+        Route::post('/audio-settings', [PortfolioDashboardController::class, 'updateAudioSettings'])
+            ->name('audio-settings.update');
+        Route::delete('/audio-settings/file', [PortfolioDashboardController::class, 'destroyAmbientAudio'])
+            ->name('audio-settings.file.destroy');
         Route::delete('/certificates/{certificate}/files/{index}', [PortfolioDashboardController::class, 'destroyCertificateFile'])
             ->whereNumber('index')
             ->name('certificates.files.destroy');

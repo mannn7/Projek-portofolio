@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/** @property list<string>|null $files */
 class Certificate extends Model
 {
     protected $fillable = [

@@ -9,6 +9,7 @@ class ProjectImage extends Model
 {
     protected $fillable = ['project_id', 'path', 'alt_text', 'sort_order'];
 
+    /** @return BelongsTo<Project, $this> */
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

@@ -834,6 +834,9 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
     const [activeFile, setActiveFile] = useState(0);
     const [direction, setDirection] = useState(1);
     const [paused, setPaused] = useState(false);
+    const [pageVisible, setPageVisible] = useState(true);
+    const mediaRef = useRef<HTMLDivElement>(null);
+    const isInView = useInView(mediaRef, { amount: 0.2 });
     const files = Array.from(
         new Set(
             [certificate.image, ...(certificate.files ?? [])].filter(
@@ -842,14 +845,29 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
         ),
     );
 
+    const previewing = isInView && pageVisible;
+
     useEffect(() => {
-        if (files.length < 2 || paused || reduceMotion) return;
+        const syncPageVisibility = () => setPageVisible(!document.hidden);
+
+        syncPageVisibility();
+        document.addEventListener('visibilitychange', syncPageVisibility);
+
+        return () =>
+            document.removeEventListener(
+                'visibilitychange',
+                syncPageVisibility,
+            );
+    }, []);
+
+    useEffect(() => {
+        if (files.length < 2 || paused || reduceMotion || !previewing) return;
         const timer = window.setTimeout(() => {
             setDirection(1);
             setActiveFile((current) => (current + 1) % files.length);
         }, 4600);
         return () => window.clearTimeout(timer);
-    }, [activeFile, files.length, paused, reduceMotion]);
+    }, [activeFile, files.length, paused, previewing, reduceMotion]);
 
     const showFile = (index: number) => {
         setDirection(index > activeFile ? 1 : -1);
@@ -878,6 +896,7 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
 
     return (
         <div
+            ref={mediaRef}
             className="group/certificate relative isolate aspect-[1.414/1] overflow-hidden bg-slate-100"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
@@ -933,16 +952,26 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
                         }}
                         className="absolute inset-0"
                     >
-                        {isPdfPath(currentFile) ? (
+                        {isPdfPath(currentFile) && previewing ? (
                             <PdfThumbnail
                                 src={asset(currentFile)!}
                                 title={`Preview of ${certificate.name}`}
                                 className="h-full w-full"
                             />
+                        ) : isPdfPath(currentFile) ? (
+                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-950/50 to-cyan-950/30">
+                                <Award
+                                    className="text-violet-400"
+                                    size={42}
+                                    aria-hidden="true"
+                                />
+                            </div>
                         ) : (
                             <img
                                 src={asset(currentFile)}
                                 alt={`${certificate.name} issued by ${certificate.issuer}`}
+                                loading="lazy"
+                                decoding="async"
                                 className="h-full w-full object-cover"
                             />
                         )}
@@ -995,7 +1024,11 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
                                         initial={{ scaleX: 0 }}
                                         animate={{
                                             scaleX:
-                                                paused || reduceMotion ? 0 : 1,
+                                                paused ||
+                                                reduceMotion ||
+                                                !previewing
+                                                    ? 0
+                                                    : 1,
                                         }}
                                         transition={{
                                             duration: 4.6,
@@ -1009,73 +1042,6 @@ function CertificateMedia({ certificate }: { certificate: Certificate }) {
                 </>
             )}
         </div>
-    );
-}
-
-function AmbientAudio() {
-    const audioRef = useRef<HTMLAudioElement>(null);
-    const startedRef = useRef(false);
-
-    useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        audio.volume = 0.5;
-
-        const events: Array<keyof DocumentEventMap> = [
-            'pointerdown',
-            'touchstart',
-            'keydown',
-        ];
-
-        const removeUnlockListeners = () => {
-            events.forEach((event) =>
-                document.removeEventListener(event, startPlayback),
-            );
-        };
-
-        const startPlayback = () => {
-            void audio
-                .play()
-                .then(() => {
-                    startedRef.current = true;
-                    removeUnlockListeners();
-                })
-                .catch(() => {
-                    // Browsers require a user gesture before audible autoplay.
-                });
-        };
-
-        const handleVisibilityChange = () => {
-            if (document.hidden) {
-                audio.pause();
-            } else if (startedRef.current) {
-                startPlayback();
-            }
-        };
-
-        startPlayback();
-        events.forEach((event) =>
-            document.addEventListener(event, startPlayback, {
-                passive: true,
-            }),
-        );
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        return () => {
-            removeUnlockListeners();
-            document.removeEventListener(
-                'visibilitychange',
-                handleVisibilityChange,
-            );
-            audio.pause();
-        };
-    }, []);
-
-    return (
-        <audio ref={audioRef} loop preload="metadata" aria-hidden="true">
-            <source src="/audio/portfolio-ambient.mp3" type="audio/mpeg" />
-        </audio>
     );
 }
 
@@ -1207,7 +1173,6 @@ export default function Portfolio({
             id="top"
             className="min-h-screen overflow-x-hidden bg-[#070910] text-slate-200 selection:bg-violet-500/40"
         >
-            <AmbientAudio />
             <AnimatePresence>
                 {showIntro && <PortfolioIntro onComplete={completeIntro} />}
             </AnimatePresence>

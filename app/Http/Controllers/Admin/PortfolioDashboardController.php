@@ -9,14 +9,20 @@ use App\Models\Experience;
 use App\Models\Profile;
 use App\Models\Project;
 use App\Models\ProjectImage;
+use App\Models\SiteSetting;
 use App\Models\Skill;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
+use Throwable;
 
 class PortfolioDashboardController extends Controller
 {
@@ -39,7 +45,75 @@ class PortfolioDashboardController extends Controller
             'experiences' => Experience::query()->orderByDesc('started_at')->get(),
             'certificates' => Certificate::query()->orderBy('sort_order')->get(),
             'contactMessages' => ContactMessage::query()->latest()->get(),
+            'audioSettings' => SiteSetting::query()->first(),
         ]);
+    }
+
+    public function updateAudioSettings(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'ambient_audio' => [
+                'nullable',
+                'file',
+                'mimes:mp3,m4a,ogg',
+                'mimetypes:audio/mpeg,audio/mp4,audio/x-m4a,audio/ogg,application/ogg',
+                'max:15360',
+            ],
+            'audio_volume' => ['required', 'integer', 'min:0', 'max:100'],
+            'audio_enabled' => ['boolean'],
+            'audio_loop' => ['boolean'],
+        ]);
+        $data['audio_enabled'] = $request->boolean('audio_enabled');
+        $data['audio_loop'] = $request->boolean('audio_loop');
+
+        $settings = SiteSetting::query()->firstOrCreate([], [
+            'ambient_audio' => '/audio/portfolio-ambient.mp3',
+            'audio_volume' => 50,
+            'audio_enabled' => true,
+            'audio_loop' => true,
+        ]);
+        $oldAudio = $settings->ambient_audio;
+        $newAudio = null;
+
+        if ($request->hasFile('ambient_audio')) {
+            $newAudio = $this->storeUploadedFile($request->file('ambient_audio'), 'audio');
+            $data['ambient_audio'] = $newAudio;
+        } else {
+            unset($data['ambient_audio']);
+        }
+
+        try {
+            $settings->update($data);
+        } catch (Throwable $exception) {
+            if ($newAudio !== null) {
+                Storage::disk('public')->delete($newAudio);
+            }
+
+            throw $exception;
+        }
+
+        if ($newAudio !== null && $oldAudio && ! str_starts_with($oldAudio, '/')) {
+            Storage::disk('public')->delete($oldAudio);
+        }
+
+        return back()->with('success', 'Music settings updated successfully.');
+    }
+
+    public function destroyAmbientAudio(): RedirectResponse
+    {
+        $settings = SiteSetting::query()->firstOrFail();
+        $path = $settings->ambient_audio;
+
+        $settings->update([
+            'ambient_audio' => null,
+            'audio_enabled' => false,
+        ]);
+
+        if ($path && ! str_starts_with($path, '/')) {
+            Storage::disk('public')->delete($path);
+        }
+
+        return back()->with('success', 'Music file deleted successfully.');
     }
 
     public function store(Request $request, string $resource): RedirectResponse
@@ -54,9 +128,22 @@ class PortfolioDashboardController extends Controller
             $record = new $model;
         }
 
-        $replacedFiles = $this->prepareUploads($request, $resource, $data, $record);
-        $record->fill($data)->save();
-        $this->storeProjectGallery($request, $resource, $record);
+        $this->assertUploadCapacity($request, $resource, $record);
+        $newFiles = [];
+        $replacedFiles = [];
+
+        try {
+            DB::transaction(function () use ($request, $resource, &$data, $record, &$newFiles, &$replacedFiles): void {
+                $replacedFiles = $this->prepareUploads($request, $resource, $data, $record, $newFiles);
+                $record->fill($data)->save();
+                $this->storeProjectGallery($request, $resource, $record, $newFiles);
+            });
+        } catch (Throwable $exception) {
+            $this->deleteReplacedFiles($newFiles);
+
+            throw $exception;
+        }
+
         $this->deleteReplacedFiles($replacedFiles);
 
         return back()->with('success', ucfirst($resource).' saved successfully.');
@@ -66,9 +153,22 @@ class PortfolioDashboardController extends Controller
     {
         $record = $this->modelFor($resource)::query()->findOrFail($id);
         $data = $this->validated($request, $resource, $id);
-        $replacedFiles = $this->prepareUploads($request, $resource, $data, $record);
-        $record->update($data);
-        $this->storeProjectGallery($request, $resource, $record);
+        $this->assertUploadCapacity($request, $resource, $record);
+        $newFiles = [];
+        $replacedFiles = [];
+
+        try {
+            DB::transaction(function () use ($request, $resource, &$data, $record, &$newFiles, &$replacedFiles): void {
+                $replacedFiles = $this->prepareUploads($request, $resource, $data, $record, $newFiles);
+                $record->update($data);
+                $this->storeProjectGallery($request, $resource, $record, $newFiles);
+            });
+        } catch (Throwable $exception) {
+            $this->deleteReplacedFiles($newFiles);
+
+            throw $exception;
+        }
+
         $this->deleteReplacedFiles($replacedFiles);
 
         return back()->with('success', ucfirst($resource).' updated successfully.');
@@ -78,22 +178,25 @@ class PortfolioDashboardController extends Controller
     {
         abort_if($resource === 'profile', 405);
         $record = $this->modelFor($resource)::query()->findOrFail($id);
+        $paths = [];
 
         if ($record instanceof Project) {
-            Storage::disk('public')->delete($record->images()->pluck('path')->all());
+            $paths = [...$paths, ...$record->images()->pluck('path')->all()];
         }
 
         foreach (['image', 'photo', 'cv_file'] as $field) {
-            if ($record->getAttribute($field)) {
-                Storage::disk('public')->delete($record->getAttribute($field));
+            $path = $record->getAttribute($field);
+            if (is_string($path) && $path !== '') {
+                $paths[] = $path;
             }
         }
 
         if ($record instanceof Certificate) {
-            Storage::disk('public')->delete($record->files ?? []);
+            $paths = [...$paths, ...$this->certificateFiles($record)];
         }
 
-        $record->delete();
+        DB::transaction(fn () => $record->delete());
+        $this->deleteReplacedFiles(array_values(array_unique($paths)));
 
         return back()->with('success', 'Item deleted successfully.');
     }
@@ -110,8 +213,9 @@ class PortfolioDashboardController extends Controller
 
     public function destroyProjectImage(ProjectImage $projectImage): RedirectResponse
     {
-        Storage::disk('public')->delete($projectImage->path);
+        $path = $projectImage->path;
         $projectImage->delete();
+        Storage::disk('public')->delete($path);
 
         return back()->with('success', 'Project screenshot deleted.');
     }
@@ -119,8 +223,9 @@ class PortfolioDashboardController extends Controller
     public function destroyProjectCover(Project $project): RedirectResponse
     {
         if ($project->image) {
-            Storage::disk('public')->delete($project->image);
+            $path = $project->image;
             $project->update(['image' => null]);
+            Storage::disk('public')->delete($path);
         }
 
         return back()->with('success', 'Project cover deleted.');
@@ -128,10 +233,7 @@ class PortfolioDashboardController extends Controller
 
     public function destroyCertificateFile(Certificate $certificate, int $index): RedirectResponse
     {
-        $files = array_values(array_unique(array_filter([
-            $certificate->image,
-            ...($certificate->files ?? []),
-        ])));
+        $files = $this->certificateFiles($certificate);
         abort_unless(array_key_exists($index, $files), 404);
 
         if (count($files) === 1) {
@@ -149,6 +251,20 @@ class PortfolioDashboardController extends Controller
         Storage::disk('public')->delete($removedFile);
 
         return back()->with('success', 'Certificate file deleted.');
+    }
+
+    public function destroyProfileMedia(Request $request, Profile $profile, string $field): RedirectResponse
+    {
+        abort_unless(in_array($field, ['photo', 'cv_file'], true), 404);
+        abort_unless($profile->user_id === $request->user()->id, 403);
+
+        $path = $profile->getAttribute($field);
+        if (is_string($path) && $path !== '') {
+            $profile->update([$field => null]);
+            Storage::disk('public')->delete($path);
+        }
+
+        return back()->with('success', $field === 'photo' ? 'Profile photo deleted.' : 'CV deleted.');
     }
 
     public function markMessageRead(ContactMessage $contactMessage): RedirectResponse
@@ -248,6 +364,15 @@ class PortfolioDashboardController extends Controller
             $rules['image'][] = 'dimensions:min_width=600,min_height=400';
         }
 
+        if ($resource === 'certificates'
+            && $id === null
+            && ! $request->hasFile('image')
+            && ! $request->hasFile('files')) {
+            throw ValidationException::withMessages([
+                'files' => 'Upload at least one certificate image or PDF.',
+            ]);
+        }
+
         // Existing media URLs can be present in older CMS form payloads. They
         // mean "keep the current file" and must not be validated as uploads.
         foreach (['photo', 'cv_file', 'image'] as $field) {
@@ -270,40 +395,74 @@ class PortfolioDashboardController extends Controller
         return $data;
     }
 
-    /** @param array<string, mixed> $data */
-    private function prepareUploads(Request $request, string $resource, array &$data, Model $record): array
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  list<string>  $newFiles
+     * @return list<string>
+     */
+    private function prepareUploads(Request $request, string $resource, array &$data, Model $record, array &$newFiles): array
     {
         $replacedFiles = [];
 
         foreach (['photo', 'cv_file', 'image'] as $field) {
+            if ($resource === 'certificates' && $field === 'image') {
+                continue;
+            }
+
             if (! $request->hasFile($field)) {
                 unset($data[$field]);
 
                 continue;
             }
-            if ($record->getAttribute($field)) {
-                $replacedFiles[] = $record->getAttribute($field);
+
+            $oldPath = $record->getAttribute($field);
+            if (is_string($oldPath) && $oldPath !== '') {
+                $replacedFiles[] = $oldPath;
             }
-            $data[$field] = $request->file($field)->store($resource, 'public');
+
+            $path = $this->storeUploadedFile($request->file($field), $resource);
+            $data[$field] = $path;
+            $newFiles[] = $path;
         }
 
-        if ($resource === 'certificates' && $record instanceof Certificate && $request->hasFile('files')) {
-            $existingFiles = array_values(array_unique(array_filter([
-                $record->image,
-                ...($record->files ?? []),
-            ])));
-            $uploadedFiles = array_map(
-                fn ($file) => $file->store('certificates', 'public'),
-                $request->file('files', []),
-            );
-            $data['files'] = array_values(array_unique([...$existingFiles, ...$uploadedFiles]));
+        if ($resource === 'certificates' && $record instanceof Certificate) {
+            $certificateFiles = $this->certificateFiles($record);
 
-            if (! $record->image && $uploadedFiles !== []) {
-                $data['image'] = $uploadedFiles[0];
+            if ($request->hasFile('image')) {
+                $oldPrimary = $record->image;
+                $newPrimary = $this->storeUploadedFile($request->file('image'), 'certificates');
+                $newFiles[] = $newPrimary;
+
+                if (is_string($oldPrimary) && $oldPrimary !== '') {
+                    $certificateFiles = array_values(array_filter(
+                        $certificateFiles,
+                        fn (string $path): bool => $path !== $oldPrimary,
+                    ));
+                    $replacedFiles[] = $oldPrimary;
+                }
+
+                array_unshift($certificateFiles, $newPrimary);
+                $data['image'] = $newPrimary;
+            } else {
+                unset($data['image']);
+            }
+
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files', []) as $file) {
+                    $path = $this->storeUploadedFile($file, 'certificates');
+                    $certificateFiles[] = $path;
+                    $newFiles[] = $path;
+                }
+            }
+
+            if ($request->hasFile('image') || $request->hasFile('files')) {
+                $certificateFiles = array_values(array_unique($certificateFiles));
+                $data['files'] = $certificateFiles;
+                $data['image'] ??= $certificateFiles[0] ?? null;
             }
         }
 
-        return $replacedFiles;
+        return array_values(array_unique($replacedFiles));
     }
 
     /** @param array<int, string> $paths */
@@ -314,7 +473,8 @@ class PortfolioDashboardController extends Controller
         }
     }
 
-    private function storeProjectGallery(Request $request, string $resource, Model $record): void
+    /** @param list<string> $newFiles */
+    private function storeProjectGallery(Request $request, string $resource, Model $record, array &$newFiles): void
     {
         if ($resource !== 'projects' || ! $record instanceof Project || ! $request->hasFile('gallery')) {
             return;
@@ -322,11 +482,61 @@ class PortfolioDashboardController extends Controller
 
         $nextOrder = (int) $record->images()->max('sort_order') + 1;
         foreach ($request->file('gallery', []) as $image) {
+            $path = $this->storeUploadedFile($image, 'projects/gallery');
+            $newFiles[] = $path;
             $record->images()->create([
-                'path' => $image->store('projects/gallery', 'public'),
+                'path' => $path,
                 'alt_text' => $record->title.' screenshot',
                 'sort_order' => $nextOrder++,
             ]);
         }
+    }
+
+    private function assertUploadCapacity(Request $request, string $resource, Model $record): void
+    {
+        if ($resource === 'projects' && $record instanceof Project) {
+            $total = $record->images()->count() + count($request->file('gallery', []));
+
+            if ($total > 8) {
+                throw ValidationException::withMessages([
+                    'gallery' => 'A project can contain a maximum of 8 gallery screenshots in total.',
+                ]);
+            }
+        }
+
+        if ($resource === 'certificates' && $record instanceof Certificate) {
+            $existingFiles = $this->certificateFiles($record);
+            $total = count($existingFiles) + count($request->file('files', []));
+
+            if ($request->hasFile('image')) {
+                $total += in_array($record->image, $existingFiles, true) ? 0 : 1;
+            }
+
+            if ($total > 8) {
+                throw ValidationException::withMessages([
+                    'files' => 'A certificate can contain a maximum of 8 files in total.',
+                ]);
+            }
+        }
+    }
+
+    /** @return list<string> */
+    private function certificateFiles(Certificate $certificate): array
+    {
+        return array_values(array_unique(array_filter(
+            [$certificate->image, ...($certificate->files ?? [])],
+            fn (mixed $path): bool => is_string($path) && $path !== '',
+        )));
+    }
+
+    private function storeUploadedFile(UploadedFile $file, string $directory): string
+    {
+        $path = $file->store($directory, 'public');
+
+        if ($path === false) {
+            throw new RuntimeException('The uploaded file could not be stored.');
+        }
+
+        return $path;
     }
 }

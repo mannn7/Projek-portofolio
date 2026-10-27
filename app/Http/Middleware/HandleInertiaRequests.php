@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -46,6 +47,33 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'currentTeam' => fn () => $user?->currentTeam ? $user->toUserTeam($user->currentTeam) : null,
             'teams' => fn () => $user?->toUserTeams(includeCurrent: true) ?? [],
+            'ambientAudio' => fn () => $this->ambientAudioSettings(),
+        ];
+    }
+
+    /** @return array{source: ?string, volume: int, enabled: bool, loop: bool} */
+    private function ambientAudioSettings(): array
+    {
+        $settings = SiteSetting::query()->first();
+
+        if ($settings === null) {
+            return [
+                'source' => '/audio/portfolio-ambient.mp3',
+                'volume' => 50,
+                'enabled' => true,
+                'loop' => true,
+            ];
+        }
+
+        $path = $settings->ambient_audio;
+
+        return [
+            'source' => $path
+                ? (str_starts_with($path, '/') ? $path : '/storage/'.ltrim($path, '/'))
+                : null,
+            'volume' => $settings->audio_volume,
+            'enabled' => $settings->audio_enabled,
+            'loop' => $settings->audio_loop,
         ];
     }
 }
