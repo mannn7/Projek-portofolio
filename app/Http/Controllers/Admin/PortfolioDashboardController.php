@@ -120,6 +120,9 @@ class PortfolioDashboardController extends Controller
     {
         $model = $this->modelFor($resource);
         $data = $this->validated($request, $resource);
+        if ($resource === 'projects' && ($data['is_published'] ?? false)) {
+    $data['published_at'] = now();
+}
 
         if ($resource === 'profile') {
             $data['user_id'] = $request->user()->id;
